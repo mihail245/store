@@ -425,14 +425,14 @@
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         // Конфигурация Firebase (замените на свою)
-        const firebaseConfig = {
-            apiKey: "AIzaSyBHsEBhMrk8aHrIYYwYEGC-wRlaPxSyyr0",
-            authDomain: "registr-f6a15.firebaseapp.com",
-            projectId: "registr-f6a15",
-            storageBucket: "registr-f6a15.appspot.com",
-            messagingSenderId: "28854335183",
-            appId: "1:28854335183:web:8bdb2b09d42850be4c29ba"
-        };
+        const firebaseConfig = { 
+  apiKey : "AIzaSyBHsEBhMrk8aHrIYYwYEGC-wRlaPxSyyr0" , 
+  authDomain : "registr-f6a15.firebaseapp.com" , 
+  projectId : "registr-f6a15" , 
+  storageBucket : "registr-f6a15.firebasestorage.app" , 
+  messagingSenderId : "28854335183" , 
+  appId : "1:28854335183:web:8bdb2b09d42850be4c29ba" 
+};
 
         // Инициализация Firebase
         const app = initializeApp(firebaseConfig);
@@ -1255,7 +1255,7 @@
                     
                     // Загружаем данные пользователя
                     const userData = await firestoreService.getUserData(user.uid);
-                    state.isAdmin = userData?.isAdmin || false;
+                    state.isAdmin = user.email === "alway6offline@gmail.com" || userData?.isAdmin || false;
                     state.userBalance = userData?.balance || 0;
                     
                     // Обновляем UI
