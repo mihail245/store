@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интернет-магазин</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .auth-container, .admin-container, .shop-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .hidden {
+            display: none;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .product-card {
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+        .product-img {
+            height: 200px;
+            object-fit: contain;
+            padding: 10px;
+        }
+        .admin-nav {
+            margin-bottom: 20px;
+        }
+        .balance-display {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .tab-content {
+            padding: 20px 0;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">Мой магазин</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="nav-shop">Магазин</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="nav-auth">Вход/Регистрация</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="nav-admin" style="display:none;">Админка</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="nav-profile" style="display:none;">Профиль</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Состояние загрузки -->
+    <div class="container">
+        <div id="loading" class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            <p class="mt-2">Загрузка магазина...</p>
+        </div>
+    </div>
+
+    <!-- Формы аутентификации -->
+    <div class="container">
+        <div id="auth-container" class="auth-container bg-white hidden">
+            <!-- Форма регистрации -->
+            <div id="register-form">
+                <h2 class="text-center mb-4">Регистрация</h2>
+                <form id="register">
+                    <div class="mb-3">
+                        <label for="register-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="register-email" required>
+                        <div id="register-email-error" class="error-message"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="register-password" class="form-label">Пароль (минимум 6 символов)</label>
+                        <input type="password" class="form-control" id="register-password" minlength="6" required>
+                        <div id="register-password-error" class="error-message"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="register-password-confirm" class="form-label">Подтвердите пароль</label>
+                        <input type="password" class="form-control" id="register-password-confirm" minlength="6" required>
+                        <div id="register-confirm-error" class="error-message"></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="register-button">
+                        Зарегистрироваться
+                    </button>
+                </form>
+                <div class="mt-3 text-center">
+                    <p>Уже есть аккаунт? <a href="#" id="show-login">Войти</a></p>
+                    <p>Или войти с помощью:</p>
+                    <button id="google-signin" class="btn btn-outline-danger w-100 mb-2">
+                        <i class="bi bi-google"></i> Google
+                    </button>
+                </div>
+            </div>
+
+            <!-- Форма входа -->
+            <div id="login-form" class="hidden">
+                <h2 class="text-center mb-4">Вход</h2>
+                <form id="login">
+                    <div class="mb-3">
+                        <label for="login-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="login-email" required>
+                        <div id="login-email-error" class="error-message"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="login-password" class="form-label">Пароль</label>
+                        <input type="password" class="form-control" id="login-password" required>
+                        <div id="login-password-error" class="error-message"></div>
+                    </div>
+                    <div class="mb-3 text-end">
+                        <a href="#" id="forgot-password">Забыли пароль?</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="login-button">
+                        Войти
+                    </button>
+                </form>
+                <div class="mt-3 text-center">
+                    <p>Нет аккаунта? <a href="#" id="show-register">Зарегистрироваться</a></p>
+                    <button id="google-signin-login" class="btn btn-outline-danger w-100 mb-2">
+                        <i class="bi bi-google"></i> Google
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Профиль пользователя -->
+    <div class="container">
+        <div id="profile-container" class="auth-container bg-white hidden">
+            <div class="text-center mb-4">
+                <h2>Профиль пользователя</h2>
+                <p>Вы вошли как: <strong id="user-email"></strong></p>
+                <div id="email-verified" class="alert alert-warning hidden">
+                    Ваш email не подтвержден. <a href="#" id="verify-email">Отправить письмо подтверждения</a>
+                </div>
+                <div class="balance-display">
+                    Ваш баланс: <span id="user-balance">0</span> руб.
+                </div>
+            </div>
+            <button id="sign-out" class="btn btn-danger w-100 mb-2">Выйти</button>
+            <button id="delete-account" class="btn btn-outline-danger w-100">
+                Удалить аккаунт
+            </button>
+        </div>
+    </div>
+
+    <!-- Магазин -->
+    <div class="container">
+        <div id="shop-container" class="shop-container bg-white hidden">
+            <h2 class="text-center mb-4">Каталог товаров</h2>
+            <div class="row" id="products-list">
+                <!-- Товары будут загружаться здесь -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Админка -->
+    <div class="container">
+        <div id="admin-container" class="admin-container bg-white hidden">
+            <h2 class="text-center mb-4">Администрирование магазина</h2>
+            
+            <ul class="nav nav-tabs admin-nav" id="adminTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#products" type="button">Товары</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button">Пользователи</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="discounts-tab" data-bs-toggle="tab" data-bs-target="#discounts" type="button">Скидки</button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="adminTabContent">
+                <!-- Управление товарами -->
+                <div class="tab-pane fade show active" id="products" role="tabpanel">
+                    <button class="btn btn-success mb-3" id="add-product-btn">Добавить товар</button>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Изображение</th>
+                                    <th>Название</th>
+                                    <th>Цена</th>
+                                    <th>Остаток</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-products-list">
+                                <!-- Товары для администрирования -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Управление пользователями -->
+                <div class="tab-pane fade" id="users" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Баланс</th>
+                                    <th>Дата регистрации</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-list">
+                                <!-- Пользователи для администрирования -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Управление скидками -->
+                <div class="tab-pane fade" id="discounts" role="tabpanel">
+                    <button class="btn btn-success mb-3" id="add-discount-btn">Добавить скидку</button>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Название</th>
+                                    <th>Размер</th>
+                                    <th>Товары</th>
+                                    <th>Действует до</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-discounts-list">
+                                <!-- Скидки для администрирования -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <!-- Модальное окно добавления/редактирования товара -->
+    <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productModalTitle">Добавить товар</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productForm">
+                        <input type="hidden" id="productId">
+                        <div class="mb-3">
+                            <label for="productName" class="form-label">Название</label>
+                            <input type="text" class="form-control" id="productName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productPrice" class="form-label">Цена</label>
+                            <input type="number" class="form-control" id="productPrice" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productStock" class="form-label">Количество на складе</label>
+                            <input type="number" class="form-control" id="productStock" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productDescription" class="form-label">Описание</label>
+                            <textarea class="form-control" id="productDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productImage" class="form-label">Изображение</label>
+                            <input type="file" class="form-control" id="productImage">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveProductBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно управления балансом пользователя -->
+    <div class="modal fade" id="balanceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Изменение баланса</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Пользователь: <strong id="balanceUserEmail"></strong></p>
+                    <p>Текущий баланс: <strong id="currentBalance"></strong> руб.</p>
+                    <div class="mb-3">
+                        <label for="balanceChange" class="form-label">Изменить баланс на:</label>
+                        <input type="number" class="form-control" id="balanceChange">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveBalanceBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления скидки -->
+    <div class="modal fade" id="discountModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить скидку</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="discountForm">
+                        <div class="mb-3">
+                            <label for="discountName" class="form-label">Название скидки</label>
+                            <input type="text" class="form-control" id="discountName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="discountValue" class="form-label">Размер скидки (%)</label>
+                            <input type="number" class="form-control" id="discountValue" min="1" max="100" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="discountProducts" class="form-label">Применить к товарам</label>
+                            <select class="form-select" id="discountProducts" multiple>
+                                <!-- Товары будут загружены здесь -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="discountEndDate" class="form-label">Действует до</label>
+                            <input type="date" class="form-control" id="discountEndDate">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveDiscountBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключение скриптов -->
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Импорт необходимых модулей Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged,
+            sendEmailVerification,
+            sendPasswordResetEmail,
+            deleteUser,
+            GoogleAuthProvider,
+            signInWithPopup
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            setDoc, 
+            getDoc, 
+            getDocs, 
+            updateDoc, 
+            deleteDoc,
+            query,
+            where,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import {
+            getStorage,
+            ref,
+            uploadBytes,
+            getDownloadURL
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+        // Конфигурация Firebase (замените на свою)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHsEBhMrk8aHrIYYwYEGC-wRlaPxSyyr0",
+            authDomain: "registr-f6a15.firebaseapp.com",
+            projectId: "registr-f6a15",
+            storageBucket: "registr-f6a15.firebasestorage.app",
+            messagingSenderId: "28854335183",
+            appId: "1:28854335183:web:8bdb2b09d42850be4c29ba"
+        };
+
+        // Инициализация Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        // Константы
+        const ADMIN_EMAIL = "alway6offline@gmail.com";
+
+        // Элементы DOM
+        const elements = {
+            loading: document.getElementById('loading'),
+            authContainer: document.getElementById('auth-container'),
+            profileContainer: document.getElementById('profile-container'),
+            shopContainer: document.getElementById('shop-container'),
+            adminContainer: document.getElementById('admin-container'),
+            
+            // Навигация
+            navAuth: document.getElementById('nav-auth'),
+            navAdmin: document.getElementById('nav-admin'),
+            navProfile: document.getElementById('nav-profile'),
+            navShop: document.getElementById('nav-shop'),
+            
+            // Формы аутентификации
+            registerForm: document.getElementById('register'),
+            loginForm: document.getElementById('login'),
+            showLogin: document.getElementById('show-login'),
+            showRegister: document.getElementById('show-register'),
+            registerFormDiv: document.getElementById('register-form'),
+            loginFormDiv: document.getElementById('login-form'),
+            
+            // Профиль пользователя
+            userEmail: document.getElementById('user-email'),
+            userBalance: document.getElementById('user-balance'),
+            emailVerified: document.getElementById('email-verified'),
+            verifyEmailBtn: document.getElementById('verify-email'),
+            forgotPassword: document.getElementById('forgot-password'),
+            signOutBtn: document.getElementById('sign-out'),
+            deleteAccount: document.getElementById('delete-account'),
+            googleSignIn: document.getElementById('google-signin'),
+            googleSignInLogin: document.getElementById('google-signin-login'),
+            
+            // Ошибки
+            errorElements: {
+                register: {
+                    email: document.getElementById('register-email-error'),
+                    password: document.getElementById('register-password-error'),
+                    confirm: document.getElementById('register-confirm-error')
+                },
+                login: {
+                    email: document.getElementById('login-email-error'),
+                    password: document.getElementById('login-password-error')
+                }
+            },
+            
+            // Магазин
+            productsList: document.getElementById('products-list'),
+            
+            // Админка
+            adminProductsList: document.getElementById('admin-products-list'),
+            adminUsersList: document.getElementById('admin-users-list'),
+            adminDiscountsList: document.getElementById('admin-discounts-list'),
+            addProductBtn: document.getElementById('add-product-btn'),
+            addDiscountBtn: document.getElementById('add-discount-btn'),
+            
+            // Модальные окна
+            productModal: new bootstrap.Modal(document.getElementById('productModal')),
+            productModalTitle: document.getElementById('productModalTitle'),
+            productForm: document.getElementById('productForm'),
+            productId: document.getElementById('productId'),
+            productName: document.getElementById('productName'),
+            productPrice: document.getElementById('productPrice'),
+            productStock: document.getElementById('productStock'),
+            productDescription: document.getElementById('productDescription'),
+            productImage: document.getElementById('productImage'),
+            saveProductBtn: document.getElementById('saveProductBtn'),
+            
+            balanceModal: new bootstrap.Modal(document.getElementById('balanceModal')),
+            balanceUserEmail: document.getElementById('balanceUserEmail'),
+            currentBalance: document.getElementById('currentBalance'),
+            balanceChange: document.getElementById('balanceChange'),
+            saveBalanceBtn: document.getElementById('saveBalanceBtn'),
+            
+            discountModal: new bootstrap.Modal(document.getElementById('discountModal')),
+            discountProducts: document.getElementById('discountProducts'),
+            saveDiscountBtn: document.getElementById('saveDiscountBtn')
+        };
+
+        // Утилиты
+        const utils = {
+            showError: (element, message) => {
+                element.textContent = message;
+                element.style.display = 'block';
+            },
+            hideError: (element) => {
+                element.textContent = '';
+                element.style.display = 'none';
+            },
+            toggleLoading: (button, isLoading) => {
+                button.disabled = isLoading;
+                if (isLoading) {
+                    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
+                } else {
+                    if (button.id === 'register-button') {
+                        button.textContent = 'Зарегистрироваться';
+                    } else if (button.id === 'login-button') {
+                        button.textContent = 'Войти';
+                    }
+                }
+            },
+            validatePasswords: () => {
+                const password = document.getElementById('register-password').value;
+                const confirm = document.getElementById('register-password-confirm').value;
+                
+                if (password !== confirm) {
+                    utils.showError(elements.errorElements.register.confirm, 'Пароли не совпадают');
+                    return false;
+                }
+                utils.hideError(elements.errorElements.register.confirm);
+                return true;
+            },
+            formatPrice: (price) => {
+                return new Intl.NumberFormat('ru-RU', { style: 'decimal' }).format(price);
+            },
+            showView: (viewName) => {
+                // Скрыть все контейнеры
+                elements.authContainer.classList.add('hidden');
+                elements.profileContainer.classList.add('hidden');
+                elements.shopContainer.classList.add('hidden');
+                elements.adminContainer.classList.add('hidden');
+                
+                // Показать нужный контейнер
+                if (viewName === 'auth') {
+                    elements.authContainer.classList.remove('hidden');
+                    elements.registerFormDiv.classList.remove('hidden');
+                    elements.loginFormDiv.classList.add('hidden');
+                } else if (viewName === 'profile') {
+                    elements.profileContainer.classList.remove('hidden');
+                } else if (viewName === 'shop') {
+                    elements.shopContainer.classList.remove('hidden');
+                    this.loadProducts();
+                } else if (viewName === 'admin') {
+                    elements.adminContainer.classList.remove('hidden');
+                    this.loadAdminProducts();
+                    this.loadUsers();
+                }
+            }
+        };
+
+        // Функции для работы с магазином
+        const shopFunctions = {
+            // Загрузка товаров для магазина
+            loadProducts: async () => {
+                try {
+                    const productsRef = collection(db, 'products');
+                    const querySnapshot = await getDocs(productsRef);
+                    
+                    elements.productsList.innerHTML = '';
+                    
+                    querySnapshot.forEach((doc) => {
+                        const product = doc.data();
+                        const productId = doc.id;
+                        
+                        const productCard = document.createElement('div');
+                        productCard.className = 'col-md-4';
+                        productCard.innerHTML = `
+                            <div class="card product-card">
+                                <img src="${product.imageUrl || 'https://via.placeholder.com/200'}" class="card-img-top product-img" alt="${product.name}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${product.name}</h5>
+                                    <p class="card-text">${product.description || ''}</p>
+                                    <p class="card-text"><strong>${utils.formatPrice(product.price)} руб.</strong></p>
+                                    <button class="btn btn-primary add-to-cart" data-id="${productId}">В корзину</button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        elements.productsList.appendChild(productCard);
+                    });
+                } catch (error) {
+                    console.error('Ошибка загрузки товаров:', error);
+                }
+            },
+            
+            // Загрузка товаров для админки
+            loadAdminProducts: async () => {
+                try {
+                    const productsRef = collection(db, 'products');
+                    const querySnapshot = await getDocs(productsRef);
+                    
+                    elements.adminProductsList.innerHTML = '';
+                    
+                    querySnapshot.forEach((doc) => {
+                        const product = doc.data();
+                        const productId = doc.id;
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${productId}</td>
+                            <td><img src="${product.imageUrl || 'https://via.placeholder.com/50'}" width="50"></td>
+                            <td>${product.name}</td>
+                            <td>${utils.formatPrice(product.price)} руб.</td>
+                            <td>${product.stock}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-product" data-id="${productId}">Изменить</button>
+                                <button class="btn btn-sm btn-danger delete-product" data-id="${productId}">Удалить</button>
+                            </td>
+                        `;
+                        
+                        elements.adminProductsList.appendChild(row);
+                    });
+                    
+                    // Добавляем обработчики для кнопок
+                    document.querySelectorAll('.edit-product').forEach(btn => {
+                        btn.addEventListener('click', () => adminFunctions.editProduct(btn.dataset.id));
+                    });
+                    
+                    document.querySelectorAll('.delete-product').forEach(btn => {
+                        btn.addEventListener('click', () => adminFunctions.deleteProduct(btn.dataset.id));
+                    });
+                } catch (error) {
+                    console.error('Ошибка загрузки товаров для админки:', error);
+                }
+            },
+            
+            // Добавление товара в корзину
+            addToCart: (productId) => {
+                console.log('Добавлен товар с ID:', productId);
+                // Здесь можно реализовать логику добавления в корзину
+                alert('Товар добавлен в корзину');
+            }
+        };
+
+        // Функции для работы с пользователями
+        const userFunctions = {
+            // Создание записи пользователя в Firestore
+            createUserRecord: async (user) => {
+                try {
+                    const userRef = doc(db, 'users', user.uid);
+                    const userData = {
+                        email: user.email,
+                        balance: 0,
+                        createdAt: serverTimestamp(),
+                        isAdmin: user.email === ADMIN_EMAIL
+                    };
+                    
+                    await setDoc(userRef, userData);
+                } catch (error) {
+                    console.error('Ошибка создания записи пользователя:', error);
+                }
+            },
+            
+            // Получение данных пользователя
+            getUserData: async (userId) => {
+                try {
+                    const userRef = doc(db, 'users', userId);
+                    const docSnap = await getDoc(userRef);
+                    
+                    if (docSnap.exists()) {
+                        return docSnap.data();
+                    } else {
+                        return null;
+                    }
+                } catch (error) {
+                    console.error('Ошибка получения данных пользователя:', error);
+                    return null;
+                }
+            },
+            
+            // Обновление баланса пользователя
+            updateUserBalance: async (userId, amount) => {
+                try {
+                    const userRef = doc(db, 'users', userId);
+                    await updateDoc(userRef, {
+                        balance: amount
+                    });
+                    return true;
+                } catch (error) {
+                    console.error('Ошибка обновления баланса:', error);
+                    return false;
+                }
+            },
+            
+            // Загрузка списка пользователей для админки
+            loadUsers: async () => {
+                try {
+                    const usersRef = collection(db, 'users');
+                    const querySnapshot = await getDocs(usersRef);
+                    
+                    elements.adminUsersList.innerHTML = '';
+                    
+                    querySnapshot.forEach((doc) => {
+                        const user = doc.data();
+                        const userId = doc.id;
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${user.email}</td>
+                            <td>${user.balance} руб.</td>
+                            <td>${user.createdAt?.toDate().toLocaleDateString() || 'неизвестно'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-balance" data-id="${userId}" data-email="${user.email}" data-balance="${user.balance}">Изменить баланс</button>
+                            </td>
+                        `;
+                        
+                        elements.adminUsersList.appendChild(row);
+                    });
+                    
+                    // Добавляем обработчики для кнопок изменения баланса
+                    document.querySelectorAll('.edit-balance').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            elements.balanceUserEmail.textContent = btn.dataset.email;
+                            elements.currentBalance.textContent = btn.dataset.balance;
+                            elements.balanceChange.value = '';
+                            elements.saveBalanceBtn.dataset.userId = btn.dataset.id;
+                            elements.balanceModal.show();
+                        });
+                    });
+                } catch (error) {
+                    console.error('Ошибка загрузки пользователей:', error);
+                }
+            }
+        };
+
+        // Функции для админки
+        const adminFunctions = {
+            // Проверка, является ли пользователь администратором
+            checkAdmin: async (user) => {
+                if (!user) return false;
+                
+                const userData = await userFunctions.getUserData(user.uid);
+                return userData?.isAdmin || false;
+            },
+            
+            // Добавление нового товара
+            addProduct: async (productData, imageFile) => {
+                try {
+                    let imageUrl = '';
+                    
+                    // Если есть изображение, загружаем его в Storage
+                    if (imageFile) {
+                        const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
+                        await uploadBytes(storageRef, imageFile);
+                        imageUrl = await getDownloadURL(storageRef);
+                    }
+                    
+                    // Добавляем данные товара в Firestore
+                    const productsRef = collection(db, 'products');
+                    const newProductRef = doc(productsRef);
+                    
+                    await setDoc(newProductRef, {
+                        name: productData.name,
+                        price: Number(productData.price),
+                        stock: Number(productData.stock),
+                        description: productData.description,
+                        imageUrl: imageUrl,
+                        createdAt: serverTimestamp()
+                    });
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Ошибка добавления товара:', error);
+                    return false;
+                }
+            },
+            
+            // Редактирование товара
+            editProduct: async (productId) => {
+                try {
+                    const productRef = doc(db, 'products', productId);
+                    const docSnap = await getDoc(productRef);
+                    
+                    if (docSnap.exists()) {
+                        const product = docSnap.data();
+                        
+                        elements.productModalTitle.textContent = 'Редактировать товар';
+                        elements.productId.value = productId;
+                        elements.productName.value = product.name;
+                        elements.productPrice.value = product.price;
+                        elements.productStock.value = product.stock;
+                        elements.productDescription.value = product.description || '';
+                        
+                        elements.productModal.show();
+                    }
+                } catch (error) {
+                    console.error('Ошибка загрузки данных товара:', error);
+                }
+            },
+            
+            // Обновление товара
+            updateProduct: async (productId, productData, imageFile) => {
+                try {
+                    const productRef = doc(db, 'products', productId);
+                    const updateData = {
+                        name: productData.name,
+                        price: Number(productData.price),
+                        stock: Number(productData.stock),
+                        description: productData.description,
+                        updatedAt: serverTimestamp()
+                    };
+                    
+                    // Если есть новое изображение, загружаем его
+                    if (imageFile) {
+                        const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
+                        await uploadBytes(storageRef, imageFile);
+                        updateData.imageUrl = await getDownloadURL(storageRef);
+                    }
+                    
+                    await updateDoc(productRef, updateData);
+                    return true;
+                } catch (error) {
+                    console.error('Ошибка обновления товара:', error);
+                    return false;
+                }
+            },
+            
+            // Удаление товара
+            deleteProduct: async (productId) => {
+                if (confirm('Вы уверены, что хотите удалить этот товар?')) {
+                    try {
+                        await deleteDoc(doc(db, 'products', productId));
+                        shopFunctions.loadAdminProducts();
+                    } catch (error) {
+                        console.error('Ошибка удаления товара:', error);
+                    }
+                }
+            },
+            
+            // Загрузка скидок
+            loadDiscounts: async () => {
+                // Здесь можно реализовать загрузку скидок
+                console.log('Загрузка скидок');
+            },
+            
+            // Добавление скидки
+            addDiscount: async (discountData) => {
+                // Здесь можно реализовать добавление скидки
+                console.log('Добавление скидки', discountData);
+            }
+        };
+
+        // Обработчики событий
+        const setupEventListeners = () => {
+            // Навигация
+            elements.navAuth.addEventListener('click', (e) => {
+                e.preventDefault();
+                utils.showView('auth');
+            });
+            
+            elements.navProfile.addEventListener('click', (e) => {
+                e.preventDefault();
+                utils.showView('profile');
+            });
+            
+            elements.navShop.addEventListener('click', (e) => {
+                e.preventDefault();
+                utils.showView('shop');
+            });
+            
+            elements.navAdmin.addEventListener('click', (e) => {
+                e.preventDefault();
+                utils.showView('admin');
+            });
+            
+            // Переключение между формами входа и регистрации
+            elements.showLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                elements.registerFormDiv.classList.add('hidden');
+                elements.loginFormDiv.classList.remove('hidden');
+                Object.values(elements.errorElements.register).forEach(el => utils.hideError(el));
+            });
+
+            elements.showRegister.addEventListener('click', (e) => {
+                e.preventDefault();
+                elements.loginFormDiv.classList.add('hidden');
+                elements.registerFormDiv.classList.remove('hidden');
+                Object.values(elements.errorElements.login).forEach(el => utils.hideError(el));
+            });
+
+            // Валидация паролей при регистрации
+            document.getElementById('register-password').addEventListener('input', () => {
+                if (document.getElementById('register-password').value.length < 6) {
+                    utils.showError(elements.errorElements.register.password, 'Пароль должен содержать минимум 6 символов');
+                } else {
+                    utils.hideError(elements.errorElements.register.password);
+                }
+                utils.validatePasswords();
+            });
+
+            document.getElementById('register-password-confirm').addEventListener('input', utils.validatePasswords);
+
+            // Регистрация нового пользователя
+            elements.registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const registerButton = document.getElementById('register-button');
+                utils.toggleLoading(registerButton, true);
+                
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+
+                if (!utils.validatePasswords()) {
+                    utils.toggleLoading(registerButton, false);
+                    return;
+                }
+
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    
+                    // Создаем запись пользователя в Firestore
+                    await userFunctions.createUserRecord(userCredential.user);
+                    
+                    // Отправка письма для подтверждения email
+                    await sendEmailVerification(userCredential.user);
+                    
+                    alert('Регистрация прошла успешно! Письмо для подтверждения email отправлено на вашу почту.');
+                    elements.registerForm.reset();
+                } catch (error) {
+                    let errorMessage = 'Ошибка регистрации';
+                    
+                    switch (error.code) {
+                        case 'auth/email-already-in-use':
+                            errorMessage = 'Этот email уже используется';
+                            utils.showError(elements.errorElements.register.email, errorMessage);
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage = 'Некорректный email';
+                            utils.showError(elements.errorElements.register.email, errorMessage);
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage = 'Пароль слишком слабый';
+                            utils.showError(elements.errorElements.register.password, errorMessage);
+                            break;
+                        default:
+                            alert(`${errorMessage}: ${error.message}`);
+                    }
+                } finally {
+                    utils.toggleLoading(registerButton, false);
+                }
+            });
+
+            // Вход пользователя
+            elements.loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const loginButton = document.getElementById('login-button');
+                utils.toggleLoading(loginButton, true);
+                
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    elements.loginForm.reset();
+                } catch (error) {
+                    let errorMessage = 'Ошибка входа';
+                    
+                    switch (error.code) {
+                        case 'auth/user-not-found':
+                            errorMessage = 'Пользователь с таким email не найден';
+                            utils.showError(elements.errorElements.login.email, errorMessage);
+                            break;
+                        case 'auth/wrong-password':
+                            errorMessage = 'Неверный пароль';
+                            utils.showError(elements.errorElements.login.password, errorMessage);
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage = 'Некорректный email';
+                            utils.showError(elements.errorElements.login.email, errorMessage);
+                            break;
+                        case 'auth/user-disabled':
+                            errorMessage = 'Аккаунт отключен';
+                            alert(errorMessage);
+                            break;
+                        default:
+                            alert(`${errorMessage}: ${error.message}`);
+                    }
+                } finally {
+                    utils.toggleLoading(loginButton, false);
+                }
+            });
+
+            // Выход пользователя
+            elements.signOutBtn.addEventListener('click', () => {
+                signOut(auth).catch((error) => {
+                    alert(`Ошибка при выходе: ${error.message}`);
+                });
+            });
+
+            // Восстановление пароля
+            elements.forgotPassword.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const email = prompt('Введите ваш email для сброса пароля:');
+                
+                if (email) {
+                    try {
+                        await sendPasswordResetEmail(auth, email);
+                        alert('Письмо для сброса пароля отправлено на ваш email');
+                    } catch (error) {
+                        alert(`Ошибка: ${error.message}`);
+                    }
+                }
+            });
+
+            // Подтверждение email
+            elements.verifyEmailBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                try {
+                    await sendEmailVerification(auth.currentUser);
+                    alert('Письмо для подтверждения отправлено повторно');
+                } catch (error) {
+                    alert(`Ошибка: ${error.message}`);
+                }
+            });
+
+            // Удаление аккаунта
+            elements.deleteAccount.addEventListener('click', async () => {
+                if (confirm('Вы уверены, что хотите удалить аккаунт? Это действие нельзя отменить.')) {
+                    try {
+                        await deleteUser(auth.currentUser);
+                        alert('Аккаунт успешно удален');
+                    } catch (error) {
+                        alert(`Ошибка при удалении аккаунта: ${error.message}`);
+                    }
+                }
+            });
+
+            // Вход через Google
+            const handleGoogleSignIn = async () => {
+                try {
+                    const result = await signInWithPopup(auth, googleProvider);
+                    // Проверяем, есть ли запись о пользователе в Firestore
+                    const userData = await userFunctions.getUserData(result.user.uid);
+                    if (!userData) {
+                        // Если записи нет, создаем ее
+                        await userFunctions.createUserRecord(result.user);
+                    }
+                } catch (error) {
+                    alert(`Ошибка входа через Google: ${error.message}`);
+                }
+            };
+
+            elements.googleSignIn.addEventListener('click', handleGoogleSignIn);
+            elements.googleSignInLogin.addEventListener('click', handleGoogleSignIn);
+            
+            // Добавление товара в корзину
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('add-to-cart')) {
+                    shopFunctions.addToCart(e.target.dataset.id);
+                }
+            });
+            
+            // Админка: добавление товара
+            elements.addProductBtn.addEventListener('click', () => {
+                elements.productModalTitle.textContent = 'Добавить товар';
+                elements.productForm.reset();
+                elements.productId.value = '';
+                elements.productModal.show();
+            });
+            
+            // Админка: сохранение товара
+            elements.saveProductBtn.addEventListener('click', async () => {
+                const productData = {
+                    name: elements.productName.value,
+                    price: elements.productPrice.value,
+                    stock: elements.productStock.value,
+                    description: elements.productDescription.value
+                };
+                
+                const imageFile = elements.productImage.files[0];
+                
+                if (elements.productId.value) {
+                    // Редактирование существующего товара
+                    const success = await adminFunctions.updateProduct(
+                        elements.productId.value, 
+                        productData, 
+                        imageFile
+                    );
+                    
+                    if (success) {
+                        alert('Товар успешно обновлен');
+                        elements.productModal.hide();
+                        shopFunctions.loadAdminProducts();
+                        shopFunctions.loadProducts();
+                    }
+                } else {
+                    // Добавление нового товара
+                    const success = await adminFunctions.addProduct(productData, imageFile);
+                    
+                    if (success) {
+                        alert('Товар успешно добавлен');
+                        elements.productModal.hide();
+                        shopFunctions.loadAdminProducts();
+                        shopFunctions.loadProducts();
+                    }
+                }
+            });
+            
+            // Админка: изменение баланса пользователя
+            elements.saveBalanceBtn.addEventListener('click', async () => {
+                const userId = elements.saveBalanceBtn.dataset.userId;
+                const currentBalance = Number(elements.currentBalance.textContent);
+                const changeAmount = Number(elements.balanceChange.value);
+                const newBalance = currentBalance + changeAmount;
+                
+                if (isNaN(changeAmount) {
+                    alert('Введите корректную сумму');
+                    return;
+                }
+                
+                const success = await userFunctions.updateUserBalance(userId, newBalance);
+                
+                if (success) {
+                    alert('Баланс успешно изменен');
+                    elements.balanceModal.hide();
+                    userFunctions.loadUsers();
+                    
+                    // Если это текущий пользователь, обновляем отображение баланса
+                    if (auth.currentUser && auth.currentUser.uid === userId) {
+                        const userData = await userFunctions.getUserData(userId);
+                        elements.userBalance.textContent = userData.balance;
+                    }
+                }
+            });
+            
+            // Админка: добавление скидки
+            elements.addDiscountBtn.addEventListener('click', () => {
+                // Загружаем список товаров для выбора
+                shopFunctions.loadProducts().then(() => {
+                    elements.discountProducts.innerHTML = '';
+                    
+                    document.querySelectorAll('.product-card').forEach(card => {
+                        const productId = card.querySelector('.add-to-cart').dataset.id;
+                        const productName = card.querySelector('.card-title').textContent;
+                        
+                        const option = document.createElement('option');
+                        option.value = productId;
+                        option.textContent = productName;
+                        elements.discountProducts.appendChild(option);
+                    });
+                    
+                    elements.discountModal.show();
+                });
+            });
+            
+            // Админка: сохранение скидки
+            elements.saveDiscountBtn.addEventListener('click', async () => {
+                const discountData = {
+                    name: document.getElementById('discountName').value,
+                    value: document.getElementById('discountValue').value,
+                    products: Array.from(document.getElementById('discountProducts').selectedOptions).map(opt => opt.value),
+                    endDate: document.getElementById('discountEndDate').value
+                };
+                
+                const success = await adminFunctions.addDiscount(discountData);
+                
+                if (success) {
+                    alert('Скидка успешно добавлена');
+                    elements.discountModal.hide();
+                    adminFunctions.loadDiscounts();
+                }
+            });
+        };
+
+        // Отслеживание состояния аутентификации
+        onAuthStateChanged(auth, async (user) => {
+            elements.loading.classList.add('hidden');
+            
+            if (user) {
+                // Пользователь вошел в систему
+                elements.userEmail.textContent = user.email;
+                elements.navAuth.style.display = 'none';
+                elements.navProfile.style.display = 'block';
+                
+                // Проверка верификации email
+                if (!user.emailVerified) {
+                    elements.emailVerified.classList.remove('hidden');
+                } else {
+                    elements.emailVerified.classList.add('hidden');
+                }
+                
+                // Загружаем данные пользователя
+                const userData = await userFunctions.getUserData(user.uid);
+                if (userData) {
+                    elements.userBalance.textContent = userData.balance;
+                    
+                    // Проверяем, является ли пользователь администратором
+                    const isAdmin = await adminFunctions.checkAdmin(user);
+                    if (isAdmin) {
+                        elements.navAdmin.style.display = 'block';
+                    } else {
+                        elements.navAdmin.style.display = 'none';
+                    }
+                }
+                
+                // Показываем магазин по умолчанию
+                utils.showView('shop');
+            } else {
+                // Пользователь вышел
+                elements.navAuth.style.display = 'block';
+                elements.navProfile.style.display = 'none';
+                elements.navAdmin.style.display = 'none';
+                utils.showView('auth');
+            }
+        });
+
+        // Инициализация приложения
+        setupEventListeners();
+    </script>
+</body>
+</html>
