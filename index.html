@@ -24,6 +24,7 @@
         .product-card {
             margin-bottom: 20px;
             transition: transform 0.3s;
+            position: relative;
         }
         .product-card:hover {
             transform: translateY(-5px);
@@ -46,6 +47,55 @@
             top: 10px;
             right: 10px;
             font-size: 0.9rem;
+            min-width: 24px;
+            padding: 0 5px;
+            text-align: center;
+        }
+        .cart-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 0.9rem;
+            min-width: 24px;
+            padding: 0 5px;
+            text-align: center;
+        }
+        .profile-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            z-index: 1000;
+            min-width: 200px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .cart-quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .cart-quantity-input {
+            width: 70px;
+            text-align: center;
+        }
+        .discount-control {
+            display: flex;
+            align-items: center;
+        }
+        .discount-input {
+            width: 80px;
+            margin-right: 10px;
+        }
+        .orders-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .order-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
         }
     </style>
 </head>
@@ -67,10 +117,23 @@
                             <a class="nav-link" href="#" id="nav-admin">Админка</a>
                         </li>
                     </ul>
-                    <div class="d-flex">
+                    <div class="d-flex align-items-center">
                         <span class="navbar-text me-3 hidden" id="user-balance-nav">Баланс: 0 ₽</span>
-                        <button class="btn btn-outline-primary me-2 hidden" id="nav-cart">Корзина</button>
-                        <button class="btn btn-outline-secondary hidden" id="nav-logout">Выйти</button>
+                        <button class="btn btn-outline-primary me-2 hidden" id="nav-cart">
+                            <i class="bi bi-cart"></i> Корзина
+                            <span class="badge bg-danger" id="cart-counter">0</span>
+                        </button>
+                        <div class="dropdown hidden" id="profile-dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" id="profile-btn" data-bs-toggle="dropdown">
+                                <i class="bi bi-person"></i> Профиль
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end profile-menu">
+                                <li><a class="dropdown-item" href="#" id="profile-settings"><i class="bi bi-gear"></i> Настройки</a></li>
+                                <li><a class="dropdown-item" href="#" id="profile-orders"><i class="bi bi-box-seam"></i> Мои заказы</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><button class="dropdown-item" id="nav-logout"><i class="bi bi-box-arrow-right"></i> Выйти</button></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -190,7 +253,7 @@
                     <a class="nav-link" href="#users-tab" data-bs-toggle="tab">Пользователи</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#discounts-tab" data-bs-toggle="tab">Скидки</a>
+                    <a class="nav-link" href="#orders-tab" data-bs-toggle="tab">Заказы</a>
                 </li>
             </ul>
             
@@ -244,23 +307,23 @@
                     </div>
                 </div>
                 
-                <div class="tab-pane fade" id="discounts-tab">
+                <div class="tab-pane fade" id="orders-tab">
                     <div class="admin-panel">
-                        <h3>Управление скидками</h3>
-                        <button class="btn btn-success mb-3" id="add-discount-btn">Добавить скидку</button>
+                        <h3>Управление заказами</h3>
                         <div class="table-responsive">
                             <table class="table table-striped">
                                 <thead>
                                     <tr>
-                                        <th>Название</th>
-                                        <th>Размер</th>
-                                        <th>Товары</th>
-                                        <th>Действует до</th>
+                                        <th>ID</th>
+                                        <th>Пользователь</th>
+                                        <th>Сумма</th>
+                                        <th>Статус</th>
+                                        <th>Дата</th>
                                         <th>Действия</th>
                                     </tr>
                                 </thead>
-                                <tbody id="admin-discounts-table">
-                                    <!-- Скидки для админа -->
+                                <tbody id="admin-orders-table">
+                                    <!-- Заказы для админа -->
                                 </tbody>
                             </table>
                         </div>
@@ -291,6 +354,13 @@
                             <div class="mb-3">
                                 <label for="product-quantity" class="form-label">Количество</label>
                                 <input type="number" class="form-control" id="product-quantity" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="product-discount" class="form-label">Скидка (%)</label>
+                                <div class="discount-control">
+                                    <input type="number" class="form-control discount-input" id="product-discount" min="0" max="100" value="0">
+                                    <div class="form-text">Введите процент скидки (0-100)</div>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="product-description" class="form-label">Описание</label>
@@ -381,6 +451,62 @@
                 </div>
             </div>
         </div>
+
+        <!-- Модальное окно настроек профиля -->
+        <div class="modal fade" id="profileModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Настройки профиля</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="profileForm">
+                            <div class="mb-3">
+                                <label for="profile-name" class="form-label">Имя</label>
+                                <input type="text" class="form-control" id="profile-name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="profile-phone" class="form-label">Телефон</label>
+                                <input type="tel" class="form-control" id="profile-phone">
+                            </div>
+                            <div class="mb-3">
+                                <label for="profile-address" class="form-label">Адрес доставки</label>
+                                <textarea class="form-control" id="profile-address" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" id="save-profile-btn">Сохранить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно моих заказов -->
+        <div class="modal fade" id="ordersModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Мои заказы</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="orders-empty" class="text-center py-4 hidden">
+                            <h4>У вас пока нет заказов</h4>
+                            <p>Совершите покупки в нашем магазине</p>
+                        </div>
+                        <div id="orders-list" class="orders-list">
+                            <!-- Заказы будут загружаться здесь -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap Icons -->
@@ -415,7 +541,8 @@
             deleteDoc,
             query,
             where,
-            serverTimestamp
+            serverTimestamp,
+            orderBy
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import {
             getStorage,
@@ -426,13 +553,13 @@
 
         // Конфигурация Firebase (замените на свою)
         const firebaseConfig = { 
-  apiKey : "AIzaSyBHsEBhMrk8aHrIYYwYEGC-wRlaPxSyyr0" , 
-  authDomain : "registr-f6a15.firebaseapp.com" , 
-  projectId : "registr-f6a15" , 
-  storageBucket : "registr-f6a15.firebasestorage.app" , 
-  messagingSenderId : "28854335183" , 
-  appId : "1:28854335183:web:8bdb2b09d42850be4c29ba" 
-};
+            apiKey: "AIzaSyBHsEBhMrk8aHrIYYwYEGC-wRlaPxSyyr0",
+            authDomain: "registr-f6a15.firebaseapp.com",
+            projectId: "registr-f6a15",
+            storageBucket: "registr-f6a15.appspot.com",
+            messagingSenderId: "28854335183",
+            appId: "1:28854335183:web:8bdb2b09d42850be4c29ba"
+        };
 
         // Инициализация Firebase
         const app = initializeApp(firebaseConfig);
@@ -443,6 +570,8 @@
 
         // Константы
         const ADMIN_EMAIL = "alway6offline@gmail.com";
+        const TELEGRAM_BOT_TOKEN = "6818081299:AAGEDkvcZltkYKPELkGv8AuvRxpBzqMQLu8"; // Замените на ваш токен бота
+        const TELEGRAM_CHAT_ID = "1209403544"; // Замените на ваш chat_id
 
         // Элементы DOM
         const elements = {
@@ -464,11 +593,14 @@
             productsContainer: document.getElementById('products-container'),
             adminProductsTable: document.getElementById('admin-products-table'),
             adminUsersTable: document.getElementById('admin-users-table'),
-            adminDiscountsTable: document.getElementById('admin-discounts-table'),
+            adminOrdersTable: document.getElementById('admin-orders-table'),
             productModal: new bootstrap.Modal(document.getElementById('productModal')),
             balanceModal: new bootstrap.Modal(document.getElementById('balanceModal')),
             cartModal: new bootstrap.Modal(document.getElementById('cartModal')),
-            // Добавляем элементы для ошибок
+            profileModal: new bootstrap.Modal(document.getElementById('profileModal')),
+            ordersModal: new bootstrap.Modal(document.getElementById('ordersModal')),
+            profileDropdown: document.getElementById('profile-dropdown'),
+            cartCounter: document.getElementById('cart-counter'),
             errorElements: {
                 register: {
                     email: document.getElementById('register-email-error'),
@@ -488,9 +620,10 @@
             isAdmin: false,
             products: [],
             users: [],
-            discounts: [],
+            orders: [],
             cart: [],
-            userBalance: 0
+            userBalance: 0,
+            userProfile: null
         };
 
         // Утилиты
@@ -535,12 +668,45 @@
             },
             hideElement: (element) => {
                 element.classList.add('hidden');
+            },
+            calculateDiscountedPrice: (price, discount) => {
+                return price * (1 - (discount || 0) / 100);
+            },
+            formatDate: (date) => {
+                return new Date(date).toLocaleString('ru-RU');
+            },
+            formatQuantity: (quantity) => {
+                return quantity > 9 ? '9+' : quantity;
+            }
+        };
+
+        // Отправка уведомлений в Telegram
+        const sendTelegramNotification = async (message) => {
+            try {
+                const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+                
+                const data = await response.json();
+                if (!data.ok) {
+                    console.error('Ошибка отправки сообщения в Telegram:', data);
+                }
+            } catch (error) {
+                console.error('Ошибка при отправке уведомления в Telegram:', error);
             }
         };
 
         // Работа с Firestore
         const firestoreService = {
-            // Товары
             getProducts: async () => {
                 const querySnapshot = await getDocs(collection(db, "products"));
                 const products = [];
@@ -561,16 +727,14 @@
             deleteProduct: async (id) => {
                 await deleteDoc(doc(db, "products", id));
             },
-            
-            // Пользователи
             getUserData: async (userId) => {
                 const docRef = doc(db, "users", userId);
                 const docSnap = await getDoc(docRef);
                 return docSnap.exists() ? docSnap.data() : null;
             },
-            updateUserBalance: async (userId, balance) => {
+            updateUserData: async (userId, data) => {
                 const docRef = doc(db, "users", userId);
-                await updateDoc(docRef, { balance });
+                await updateDoc(docRef, data);
             },
             getAllUsers: async () => {
                 const querySnapshot = await getDocs(collection(db, "users"));
@@ -580,8 +744,6 @@
                 });
                 return users;
             },
-            
-            // Корзина и заказы
             getCart: async (userId) => {
                 const docRef = doc(db, "carts", userId);
                 const docSnap = await getDoc(docRef);
@@ -600,6 +762,28 @@
                     status: "pending"
                 });
                 return docRef.id;
+            },
+            getUserOrders: async (userId) => {
+                const q = query(collection(db, "orders"), where("userId", "==", userId), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                const orders = [];
+                querySnapshot.forEach((doc) => {
+                    orders.push({ id: doc.id, ...doc.data() });
+                });
+                return orders;
+            },
+            getAllOrders: async () => {
+                const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                const orders = [];
+                querySnapshot.forEach((doc) => {
+                    orders.push({ id: doc.id, ...doc.data() });
+                });
+                return orders;
+            },
+            updateOrderStatus: async (orderId, status) => {
+                const docRef = doc(db, "orders", orderId);
+                await updateDoc(docRef, { status });
             }
         };
 
@@ -610,7 +794,6 @@
                 e.preventDefault();
                 utils.hideElement(elements.registerFormDiv);
                 utils.showElement(elements.loginFormDiv);
-                // Очистка ошибок
                 Object.values(elements.errorElements.register).forEach(el => utils.hideError(el));
             });
 
@@ -618,7 +801,6 @@
                 e.preventDefault();
                 utils.hideElement(elements.loginFormDiv);
                 utils.showElement(elements.registerFormDiv);
-                // Очистка ошибок
                 Object.values(elements.errorElements.login).forEach(el => utils.hideError(el));
             });
 
@@ -643,7 +825,6 @@
                 const email = document.getElementById('register-email').value;
                 const password = document.getElementById('register-password').value;
 
-                // Проверка паролей
                 if (!utils.validatePasswords()) {
                     utils.toggleLoading(registerButton, false);
                     return;
@@ -652,15 +833,16 @@
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     
-                    // Создаем запись пользователя в Firestore
                     await setDoc(doc(db, "users", userCredential.user.uid), {
                         email: userCredential.user.email,
                         balance: 0,
                         createdAt: serverTimestamp(),
-                        isAdmin: email === ADMIN_EMAIL
+                        isAdmin: email === ADMIN_EMAIL,
+                        name: '',
+                        phone: '',
+                        address: ''
                     });
                     
-                    // Отправка письма для подтверждения email
                     await sendEmailVerification(userCredential.user);
                     
                     alert('Регистрация прошла успешно! Письмо для подтверждения email отправлено на вашу почту.');
@@ -742,15 +924,16 @@
                     const result = await signInWithPopup(auth, googleProvider);
                     const user = result.user;
                     
-                    // Проверяем, есть ли пользователь в базе
                     const userDoc = await firestoreService.getUserData(user.uid);
                     if (!userDoc) {
-                        // Создаем запись пользователя в Firestore
                         await setDoc(doc(db, "users", user.uid), {
                             email: user.email,
                             balance: 0,
                             createdAt: serverTimestamp(),
-                            isAdmin: user.email === ADMIN_EMAIL
+                            isAdmin: user.email === ADMIN_EMAIL,
+                            name: '',
+                            phone: '',
+                            address: ''
                         });
                     }
                 } catch (error) {
@@ -783,11 +966,43 @@
                 elements.cartModal.show();
             });
 
+            // Профиль
+            document.getElementById('profile-settings').addEventListener('click', (e) => {
+                e.preventDefault();
+                loadProfileData();
+                elements.profileModal.show();
+            });
+
+            document.getElementById('profile-orders').addEventListener('click', async (e) => {
+                e.preventDefault();
+                await loadUserOrders();
+                elements.ordersModal.show();
+            });
+
+            document.getElementById('save-profile-btn').addEventListener('click', async () => {
+                const profileData = {
+                    name: document.getElementById('profile-name').value,
+                    phone: document.getElementById('profile-phone').value,
+                    address: document.getElementById('profile-address').value,
+                    updatedAt: serverTimestamp()
+                };
+
+                try {
+                    await firestoreService.updateUserData(state.currentUser.uid, profileData);
+                    state.userProfile = { ...state.userProfile, ...profileData };
+                    elements.profileModal.hide();
+                    alert('Настройки профиля сохранены');
+                } catch (error) {
+                    alert(`Ошибка при сохранении настроек: ${error.message}`);
+                }
+            });
+
             // Админка: товары
             document.getElementById('add-product-btn').addEventListener('click', () => {
                 document.getElementById('productModalTitle').textContent = 'Добавить товар';
                 document.getElementById('productForm').reset();
                 document.getElementById('product-id').value = '';
+                document.getElementById('product-discount').value = 0;
                 elements.productModal.show();
             });
 
@@ -796,6 +1011,7 @@
                     name: document.getElementById('product-name').value,
                     price: parseFloat(document.getElementById('product-price').value),
                     quantity: parseInt(document.getElementById('product-quantity').value),
+                    discount: parseInt(document.getElementById('product-discount').value) || 0,
                     description: document.getElementById('product-description').value,
                     image: document.getElementById('product-image').value,
                     category: document.getElementById('product-category').value,
@@ -806,10 +1022,8 @@
 
                 try {
                     if (productId) {
-                        // Редактирование существующего товара
                         await firestoreService.updateProduct(productId, product);
                     } else {
-                        // Добавление нового товара
                         await firestoreService.addProduct(product);
                     }
                     
@@ -844,15 +1058,13 @@
                     const userDoc = await firestoreService.getUserData(userId);
                     const newBalance = (userDoc.balance || 0) + change;
                     
-                    await firestoreService.updateUserBalance(userId, newBalance);
+                    await firestoreService.updateUserData(userId, { balance: newBalance });
                     
-                    // Обновляем баланс в таблице
                     const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
                     if (userRow) {
                         userRow.querySelector('.user-balance').textContent = utils.formatPrice(newBalance);
                     }
                     
-                    // Если это текущий пользователь, обновляем его баланс
                     if (state.currentUser && state.currentUser.uid === userId) {
                         state.userBalance = newBalance;
                         updateUserBalanceDisplay();
@@ -862,6 +1074,41 @@
                     alert('Баланс успешно обновлен');
                 } catch (error) {
                     alert(`Ошибка при обновлении баланса: ${error.message}`);
+                }
+            });
+
+            // Админка: заказы
+            document.getElementById('admin-orders-table').addEventListener('click', async (e) => {
+                if (e.target.classList.contains('update-order-status')) {
+                    const orderId = e.target.getAttribute('data-order-id');
+                    const newStatus = e.target.getAttribute('data-status');
+                    
+                    try {
+                        await firestoreService.updateOrderStatus(orderId, newStatus);
+                        
+                        // Если заказ подтвержден, отправляем уведомление в Telegram
+                        if (newStatus === 'paid') {
+                            const order = state.orders.find(o => o.id === orderId);
+                            if (order) {
+                                const userDoc = await firestoreService.getUserData(order.userId);
+                                const message = `✅ <b>Новый заказ подтвержден</b>\n\n` +
+                                    `ID заказа: ${order.id}\n` +
+                                    `Пользователь: ${userDoc?.email || 'Неизвестно'}\n` +
+                                    `Сумма: ${utils.formatPrice(order.total)} ₽\n` +
+                                    `Дата: ${utils.formatDate(order.createdAt?.toDate())}\n\n` +
+                                    `Товары:\n${order.items.map(item => 
+                                        `- ${item.name} × ${item.quantity} (${utils.formatPrice(item.price)} ₽)`
+                                    ).join('\n')}`;
+                                
+                                await sendTelegramNotification(message);
+                            }
+                        }
+                        
+                        loadAdminData();
+                        alert('Статус заказа обновлен');
+                    } catch (error) {
+                        alert(`Ошибка при обновлении статуса: ${error.message}`);
+                    }
                 }
             });
 
@@ -877,27 +1124,46 @@
                 }
                 
                 try {
-                    // Создаем заказ
                     const orderId = await firestoreService.createOrder(state.currentUser.uid, {
-                        items: state.cart,
+                        items: state.cart.map(item => ({
+                            id: item.id,
+                            name: item.name,
+                            price: item.price,
+                            originalPrice: item.originalPrice,
+                            quantity: item.quantity,
+                            discount: item.originalPrice ? Math.round((1 - item.price / item.originalPrice) * 100) : 0
+                        })),
                         total,
-                        status: 'paid'
+                        status: 'pending'
                     });
                     
-                    // Списание средств
+                    // Списываем деньги с баланса пользователя
                     const newBalance = state.userBalance - total;
-                    await firestoreService.updateUserBalance(state.currentUser.uid, newBalance);
+                    await firestoreService.updateUserData(state.currentUser.uid, { balance: newBalance });
                     
                     // Очищаем корзину
                     await firestoreService.updateCart(state.currentUser.uid, []);
                     state.cart = [];
                     
-                    // Обновляем баланс
+                    // Обновляем состояние приложения
                     state.userBalance = newBalance;
                     updateUserBalanceDisplay();
+                    updateCartCounter();
+                    
+                    // Отправляем уведомление в Telegram о новом заказе
+                    const message = `🛒 <b>Новый заказ</b>\n\n` +
+                        `ID заказа: ${orderId}\n` +
+                        `Пользователь: ${state.currentUser.email}\n` +
+                        `Сумма: ${utils.formatPrice(total)} ₽\n\n` +
+                        `Товары:\n${state.cart.map(item => 
+                            `- ${item.name} × ${item.quantity} (${utils.formatPrice(item.price)} ₽)`
+                        ).join('\n')}`;
+                    
+                    await sendTelegramNotification(message);
                     
                     elements.cartModal.hide();
-                    alert(`Заказ #${orderId} успешно оформлен!`);
+                    alert(`Заказ #${orderId} успешно оформлен! Ожидайте подтверждения.`);
+                    renderProducts();
                 } catch (error) {
                     alert(`Ошибка при оформлении заказа: ${error.message}`);
                 }
@@ -918,11 +1184,14 @@
                 productCard.className = 'col-md-4 mb-4';
                 
                 const discount = product.discount || 0;
-                const finalPrice = product.price * (1 - discount / 100);
+                const finalPrice = utils.calculateDiscountedPrice(product.price, discount);
+                const cartItem = state.cart.find(item => item.id === product.id);
+                const quantityInCart = cartItem ? cartItem.quantity : 0;
                 
                 productCard.innerHTML = `
                     <div class="card product-card h-100">
                         ${product.image ? `<img src="${product.image}" class="card-img-top" alt="${product.name}" style="height: 200px; object-fit: cover;">` : ''}
+                        ${quantityInCart > 0 ? `<span class="badge bg-primary cart-badge">${utils.formatQuantity(quantityInCart)}</span>` : ''}
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title">${product.name}</h5>
                             <p class="card-text">${product.description || ''}</p>
@@ -936,9 +1205,17 @@
                                             <span class="fw-bold">${utils.formatPrice(product.price)} ₽</span>
                                         `}
                                     </div>
-                                    <button class="btn btn-sm btn-primary add-to-cart" data-product-id="${product.id}">
-                                        <i class="bi bi-cart-plus"></i>
-                                    </button>
+                                    ${quantityInCart > 0 ? `
+                                        <div class="cart-quantity-control">
+                                            <button class="btn btn-sm btn-outline-secondary decrease-cart" data-product-id="${product.id}">-</button>
+                                            <input type="number" class="form-control cart-quantity-input" value="${quantityInCart}" min="1" data-product-id="${product.id}">
+                                            <button class="btn btn-sm btn-outline-secondary increase-cart" data-product-id="${product.id}">+</button>
+                                        </div>
+                                    ` : `
+                                        <button class="btn btn-sm btn-primary add-to-cart" data-product-id="${product.id}">
+                                            <i class="bi bi-cart-plus"></i> В корзину
+                                        </button>
+                                    `}
                                 </div>
                                 ${discount > 0 ? `<span class="badge bg-danger discount-badge">-${discount}%</span>` : ''}
                             </div>
@@ -949,31 +1226,83 @@
                 elements.productsContainer.appendChild(productCard);
             });
 
-            // Добавляем обработчики для кнопок "В корзину"
+            // Обработчики для изменения количества в карточке товара
+            document.querySelectorAll('.increase-cart').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const productId = e.target.closest('[data-product-id]').getAttribute('data-product-id');
+                    const item = state.cart.find(item => item.id === productId);
+                    if (item) {
+                        item.quantity += 1;
+                        await firestoreService.updateCart(state.currentUser.uid, state.cart);
+                        renderCart();
+                        renderProducts();
+                        updateCartCounter();
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.decrease-cart').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const productId = e.target.closest('[data-product-id]').getAttribute('data-product-id');
+                    const item = state.cart.find(item => item.id === productId);
+                    if (item) {
+                        if (item.quantity > 1) {
+                            item.quantity -= 1;
+                        } else {
+                            state.cart = state.cart.filter(i => i.id !== productId);
+                        }
+                        await firestoreService.updateCart(state.currentUser.uid, state.cart);
+                        renderCart();
+                        renderProducts();
+                        updateCartCounter();
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.cart-quantity-input').forEach(input => {
+                input.addEventListener('change', async (e) => {
+                    const productId = e.target.getAttribute('data-product-id');
+                    const quantity = parseInt(e.target.value);
+                    
+                    if (quantity < 1) {
+                        e.target.value = 1;
+                        return;
+                    }
+                    
+                    const item = state.cart.find(item => item.id === productId);
+                    if (item) {
+                        item.quantity = quantity;
+                        await firestoreService.updateCart(state.currentUser.uid, state.cart);
+                        renderCart();
+                        renderProducts();
+                        updateCartCounter();
+                    }
+                });
+            });
+
+            // Обработчик добавления в корзину
             document.querySelectorAll('.add-to-cart').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.add-to-cart').getAttribute('data-product-id');
                     const product = state.products.find(p => p.id === productId);
                     
                     if (product) {
-                        // Проверяем, есть ли товар уже в корзине
-                        const cartItem = state.cart.find(item => item.id === productId);
+                        const discount = product.discount || 0;
+                        const discountedPrice = utils.calculateDiscountedPrice(product.price, discount);
                         
-                        if (cartItem) {
-                            // Увеличиваем количество
-                            cartItem.quantity += 1;
-                        } else {
-                            // Добавляем новый товар
-                            state.cart.push({
-                                ...product,
-                                quantity: 1
-                            });
-                        }
+                        state.cart.push({
+                            id: product.id,
+                            name: product.name,
+                            price: discountedPrice,
+                            originalPrice: product.price,
+                            quantity: 1,
+                            image: product.image
+                        });
                         
-                        // Сохраняем корзину
                         await firestoreService.updateCart(state.currentUser.uid, state.cart);
                         renderCart();
-                        alert('Товар добавлен в корзину');
+                        renderProducts();
+                        updateCartCounter();
                     }
                 });
             });
@@ -993,7 +1322,7 @@
                     <td>${product.quantity}</td>
                     <td>
                         <button class="btn btn-sm btn-warning edit-product" data-product-id="${product.id}">
-                            <i class="bi bi-pencil"></i>
+                            <i class="bi bi-pencil"></i> Редактировать
                         </button>
                         <button class="btn btn-sm btn-danger delete-product" data-product-id="${product.id}">
                             <i class="bi bi-trash"></i>
@@ -1004,7 +1333,6 @@
                 elements.adminProductsTable.appendChild(row);
             });
 
-            // Обработчики для кнопок редактирования и удаления
             document.querySelectorAll('.edit-product').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.edit-product').getAttribute('data-product-id');
@@ -1016,6 +1344,7 @@
                         document.getElementById('product-name').value = product.name;
                         document.getElementById('product-price').value = product.price;
                         document.getElementById('product-quantity').value = product.quantity;
+                        document.getElementById('product-discount').value = product.discount || 0;
                         document.getElementById('product-description').value = product.description || '';
                         document.getElementById('product-image').value = product.image || '';
                         document.getElementById('product-category').value = product.category || '';
@@ -1056,13 +1385,15 @@
                         <button class="btn btn-sm btn-primary edit-balance" data-user-id="${user.id}" data-user-email="${user.email}">
                             <i class="bi bi-wallet2"></i> Баланс
                         </button>
+                        ${!user.isAdmin ? `<button class="btn btn-sm btn-danger delete-user" data-user-id="${user.id}">
+                            <i class="bi bi-trash"></i>
+                        </button>` : ''}
                     </td>
                 `;
                 
                 elements.adminUsersTable.appendChild(row);
             });
 
-            // Обработчики для кнопок управления балансом
             document.querySelectorAll('.edit-balance').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const userId = e.target.closest('.edit-balance').getAttribute('data-user-id');
@@ -1077,29 +1408,102 @@
                     elements.balanceModal.show();
                 });
             });
+
+            document.querySelectorAll('.delete-user').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const userId = e.target.closest('.delete-user').getAttribute('data-user-id');
+                    
+                    if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+                        try {
+                            await deleteDoc(doc(db, "users", userId));
+                            loadAdminData();
+                        } catch (error) {
+                            alert(`Ошибка при удалении пользователя: ${error.message}`);
+                        }
+                    }
+                });
+            });
         };
 
-        const renderDiscountsTable = () => {
-            elements.adminDiscountsTable.innerHTML = '';
+        const renderAdminOrdersTable = () => {
+            elements.adminOrdersTable.innerHTML = '';
             
-            state.discounts.forEach(discount => {
+            state.orders.forEach(order => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${discount.name}</td>
-                    <td>${discount.amount}%</td>
-                    <td>${discount.products?.join(', ') || 'Все товары'}</td>
-                    <td>${discount.expiresAt?.toDate().toLocaleDateString() || 'Без срока'}</td>
+                    <td>${order.id.substring(0, 8)}...</td>
+                    <td>${order.userEmail || 'Неизвестно'}</td>
+                    <td>${utils.formatPrice(order.total)} ₽</td>
                     <td>
-                        <button class="btn btn-sm btn-warning edit-discount" data-discount-id="${discount.id}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger delete-discount" data-discount-id="${discount.id}">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        <span class="badge ${order.status === 'paid' ? 'bg-success' : 'bg-warning'}">
+                            ${order.status === 'paid' ? 'Оплачен' : 'В обработке'}
+                        </span>
+                    </td>
+                    <td>${order.createdAt?.toDate().toLocaleString() || 'Неизвестно'}</td>
+                    <td>
+                        ${order.status !== 'paid' ? `
+                            <button class="btn btn-sm btn-success update-order-status" data-order-id="${order.id}" data-status="paid">
+                                Подтвердить оплату
+                            </button>
+                        ` : ''}
                     </td>
                 `;
                 
-                elements.adminDiscountsTable.appendChild(row);
+                elements.adminOrdersTable.appendChild(row);
+            });
+        };
+
+        const renderUserOrders = () => {
+            const ordersList = document.getElementById('orders-list');
+            ordersList.innerHTML = '';
+            
+            if (state.orders.length === 0) {
+                utils.showElement(document.getElementById('orders-empty'));
+                return;
+            }
+            
+            utils.hideElement(document.getElementById('orders-empty'));
+            
+            state.orders.forEach(order => {
+                const orderElement = document.createElement('div');
+                orderElement.className = 'order-item';
+                
+                let itemsHtml = '';
+                order.items.forEach(item => {
+                    itemsHtml += `
+                        <div class="d-flex justify-content-between mb-2">
+                            <div>
+                                ${item.image ? `<img src="${item.image}" alt="${item.name}" style="height: 50px; margin-right: 10px;">` : ''}
+                                ${item.name} × ${item.quantity}
+                            </div>
+                            <div>
+                                ${utils.formatPrice(item.price * item.quantity)} ₽
+                                ${item.discount > 0 ? `<span class="text-muted small">(скидка ${item.discount}%)</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                orderElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5>Заказ #${order.id.substring(0, 8)}</h5>
+                        <span class="badge ${order.status === 'paid' ? 'bg-success' : 'bg-warning'}">
+                            ${order.status === 'paid' ? 'Оплачен' : 'В обработке'}
+                        </span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Дата:</strong> ${order.createdAt?.toDate().toLocaleString() || 'Неизвестно'}
+                    </div>
+                    <div class="mb-3">
+                        ${itemsHtml}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="fw-bold">Итого: ${utils.formatPrice(order.total)} ₽</div>
+                    </div>
+                    <hr>
+                `;
+                
+                ordersList.appendChild(orderElement);
             });
         };
 
@@ -1113,6 +1517,7 @@
                 utils.showElement(cartEmpty);
                 utils.hideElement(cartItems);
                 utils.hideElement(checkoutBtn);
+                updateCartCounter();
                 return;
             }
             
@@ -1130,8 +1535,18 @@
                 total += itemTotal;
                 
                 row.innerHTML = `
-                    <td>${item.name}</td>
-                    <td>${utils.formatPrice(item.price)} ₽</td>
+                    <td>
+                        ${item.image ? `<img src="${item.image}" alt="${item.name}" style="height: 50px; margin-right: 10px;">` : ''}
+                        ${item.name}
+                    </td>
+                    <td>
+                        ${item.originalPrice && item.originalPrice > item.price ? `
+                            <span class="text-muted text-decoration-line-through">${utils.formatPrice(item.originalPrice)} ₽</span>
+                            <span class="text-danger fw-bold ms-2">${utils.formatPrice(item.price)} ₽</span>
+                        ` : `
+                            <span class="fw-bold">${utils.formatPrice(item.price)} ₽</span>
+                        `}
+                    </td>
                     <td>
                         <div class="input-group input-group-sm" style="width: 120px;">
                             <button class="btn btn-outline-secondary decrease-quantity" data-product-id="${item.id}">-</button>
@@ -1151,8 +1566,8 @@
             });
             
             document.getElementById('cart-total').textContent = utils.formatPrice(total);
+            updateCartCounter();
             
-            // Обработчики для изменения количества
             document.querySelectorAll('.increase-quantity').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.increase-quantity').getAttribute('data-product-id');
@@ -1161,6 +1576,7 @@
                         item.quantity += 1;
                         await firestoreService.updateCart(state.currentUser.uid, state.cart);
                         renderCart();
+                        renderProducts();
                     }
                 });
             });
@@ -1177,6 +1593,7 @@
                         }
                         await firestoreService.updateCart(state.currentUser.uid, state.cart);
                         renderCart();
+                        renderProducts();
                     }
                 });
             });
@@ -1187,10 +1604,10 @@
                     state.cart = state.cart.filter(item => item.id !== productId);
                     await firestoreService.updateCart(state.currentUser.uid, state.cart);
                     renderCart();
+                    renderProducts();
                 });
             });
             
-            // Обработчики для прямого ввода количества
             document.querySelectorAll('#cart-items-table input[type="number"]').forEach(input => {
                 input.addEventListener('change', async (e) => {
                     const productId = e.target.getAttribute('data-product-id');
@@ -1206,6 +1623,7 @@
                         item.quantity = quantity;
                         await firestoreService.updateCart(state.currentUser.uid, state.cart);
                         renderCart();
+                        renderProducts();
                     }
                 });
             });
@@ -1215,22 +1633,35 @@
             elements.userBalanceNav.textContent = `Баланс: ${utils.formatPrice(state.userBalance)} ₽`;
         };
 
+        const updateCartCounter = () => {
+            const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+            elements.cartCounter.textContent = totalItems > 9 ? '9+' : totalItems;
+            if (totalItems > 0) {
+                utils.showElement(elements.cartCounter);
+            } else {
+                utils.hideElement(elements.cartCounter);
+            }
+        };
+
         // Загрузка данных
         const loadAdminData = async () => {
             try {
-                // Загрузка товаров
                 state.products = await firestoreService.getProducts();
-                renderAdminProductsTable();
+                state.users = await firestoreService.getAllUsers();
+                state.orders = await firestoreService.getAllOrders();
                 
-                // Загрузка пользователей (только для админа)
-                if (state.isAdmin) {
-                    state.users = await firestoreService.getAllUsers();
-                    renderUsersTable();
-                    
-                    // Загрузка скидок
-                    // state.discounts = await firestoreService.getDiscounts();
-                    // renderDiscountsTable();
-                }
+                // Добавляем email пользователей к заказам
+                state.orders = await Promise.all(state.orders.map(async order => {
+                    const userDoc = await firestoreService.getUserData(order.userId);
+                    return {
+                        ...order,
+                        userEmail: userDoc?.email || 'Неизвестно'
+                    };
+                }));
+                
+                renderAdminProductsTable();
+                renderUsersTable();
+                renderAdminOrdersTable();
             } catch (error) {
                 console.error('Ошибка при загрузке данных:', error);
             }
@@ -1239,6 +1670,25 @@
         const loadCart = async () => {
             if (state.currentUser) {
                 state.cart = await firestoreService.getCart(state.currentUser.uid);
+                updateCartCounter();
+            }
+        };
+
+        const loadProfileData = async () => {
+            if (state.currentUser) {
+                state.userProfile = await firestoreService.getUserData(state.currentUser.uid);
+                if (state.userProfile) {
+                    document.getElementById('profile-name').value = state.userProfile.name || '';
+                    document.getElementById('profile-phone').value = state.userProfile.phone || '';
+                    document.getElementById('profile-address').value = state.userProfile.address || '';
+                }
+            }
+        };
+
+        const loadUserOrders = async () => {
+            if (state.currentUser) {
+                state.orders = await firestoreService.getUserOrders(state.currentUser.uid);
+                renderUserOrders();
             }
         };
 
@@ -1250,53 +1700,45 @@
                 utils.hideElement(elements.loading);
                 
                 if (user) {
-                    // Пользователь вошел в систему
                     state.currentUser = user;
                     
-                    // Загружаем данные пользователя
                     const userData = await firestoreService.getUserData(user.uid);
-                    state.isAdmin = user.email === "alway6offline@gmail.com" || userData?.isAdmin || false;
+                    state.isAdmin = user.email === ADMIN_EMAIL || userData?.isAdmin || false;
                     state.userBalance = userData?.balance || 0;
+                    state.userProfile = userData;
                     
-                    // Обновляем UI
                     updateUserBalanceDisplay();
                     
-                    // Показываем/скрываем админку
                     if (state.isAdmin) {
                         utils.showElement(elements.navAdminItem);
                     } else {
                         utils.hideElement(elements.navAdminItem);
                     }
                     
-                    // Показываем основной интерфейс
                     utils.showElement(elements.navCart);
-                    utils.showElement(elements.navLogout);
+                    utils.showElement(elements.profileDropdown);
                     utils.hideElement(elements.registerFormDiv);
                     utils.hideElement(elements.loginFormDiv);
                     
-                    // Загружаем товары и корзину
                     state.products = await firestoreService.getProducts();
                     await loadCart();
                     
-                    // Показываем магазин по умолчанию
                     utils.showElement(elements.shopContent);
                     utils.hideElement(elements.adminContent);
                     renderProducts();
                 } else {
-                    // Пользователь вышел
                     state.currentUser = null;
                     state.isAdmin = false;
                     state.userBalance = 0;
                     state.cart = [];
+                    state.userProfile = null;
                     
-                    // Скрываем элементы интерфейса
                     utils.hideElement(elements.navAdminItem);
                     utils.hideElement(elements.navCart);
-                    utils.hideElement(elements.navLogout);
+                    utils.hideElement(elements.profileDropdown);
                     utils.hideElement(elements.shopContent);
                     utils.hideElement(elements.adminContent);
                     
-                    // Показываем форму входа
                     utils.showElement(elements.registerFormDiv);
                     utils.hideElement(elements.loginFormDiv);
                 }
