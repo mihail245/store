@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+сделай кнопку удалить аккаунт в профиле и сделай чтобы когда пишут в поддержку то приходило сообщение в бота и была ссылка после перехода по ней можно было бы отвечать на сообщения прямо на сайте <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -97,11 +97,31 @@
             border-bottom: 1px solid #eee;
             padding: 10px 0;
         }
+        .support-message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        .support-message.user {
+            background-color: #e3f2fd;
+            margin-left: auto;
+            margin-right: 0;
+        }
+        .support-message.admin {
+            background-color: #f1f1f1;
+            margin-left: 0;
+            margin-right: auto;
+        }
+        .support-meta {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Навигация -->
         <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
             <div class="container-fluid">
                 <a class="navbar-brand" href="#">Мой магазин</a>
@@ -115,6 +135,9 @@
                         </li>
                         <li class="nav-item hidden" id="nav-admin-item">
                             <a class="nav-link" href="#" id="nav-admin">Админка</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="nav-support">Техподдержка</a>
                         </li>
                     </ul>
                     <div class="d-flex align-items-center">
@@ -138,16 +161,12 @@
                 </div>
             </div>
         </nav>
-
-        <!-- Состояние загрузки -->
         <div id="loading" class="text-center">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Загрузка...</span>
             </div>
             <p class="mt-2">Проверка состояния аутентификации...</p>
         </div>
-
-        <!-- Форма регистрации -->
         <div id="register-form" class="hidden">
             <div class="auth-container bg-white">
                 <h2 class="text-center mb-4">Регистрация</h2>
@@ -180,8 +199,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Форма входа -->
         <div id="login-form" class="hidden">
             <div class="auth-container bg-white">
                 <h2 class="text-center mb-4">Вход</h2>
@@ -212,8 +229,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Главная страница (магазин) -->
         <div id="shop-content" class="hidden">
             <div class="row">
                 <div class="col-md-3 hidden" id="filter-sidebar">
@@ -235,16 +250,12 @@
                 <div class="col-md-9">
                     <h2 class="mb-4">Каталог товаров</h2>
                     <div class="row" id="products-container">
-                        <!-- Товары будут загружаться здесь -->
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Админ-панель -->
         <div id="admin-content" class="hidden">
             <h2 class="mb-4">Административная панель</h2>
-            
             <ul class="nav nav-tabs" id="adminTabs">
                 <li class="nav-item">
                     <a class="nav-link active" href="#products-tab" data-bs-toggle="tab">Товары</a>
@@ -255,8 +266,10 @@
                 <li class="nav-item">
                     <a class="nav-link" href="#orders-tab" data-bs-toggle="tab">Заказы</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#support-tab" data-bs-toggle="tab">Поддержка</a>
+                </li>
             </ul>
-            
             <div class="tab-content">
                 <div class="tab-pane fade show active" id="products-tab">
                     <div class="admin-panel">
@@ -276,13 +289,11 @@
                                     </tr>
                                 </thead>
                                 <tbody id="admin-products-table">
-                                    <!-- Товары для админа -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-                
                 <div class="tab-pane fade" id="users-tab">
                     <div class="admin-panel">
                         <h3>Управление пользователями</h3>
@@ -300,7 +311,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="admin-users-table">
-                                    <!-- Пользователи для админа -->
                                 </tbody>
                             </table>
                         </div>
@@ -323,7 +333,26 @@
                                     </tr>
                                 </thead>
                                 <tbody id="admin-orders-table">
-                                    <!-- Заказы для админа -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="support-tab">
+                    <div class="admin-panel">
+                        <h3>Техподдержка</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Пользователь</th>
+                                        <th>Последнее сообщение</th>
+                                        <th>Дата</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-support-table">
                                 </tbody>
                             </table>
                         </div>
@@ -331,8 +360,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Модальное окно для добавления/редактирования товара -->
         <div class="modal fade" id="productModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -383,8 +410,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Модальное окно для управления балансом пользователя -->
         <div class="modal fade" id="balanceModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -408,8 +433,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Модальное окно корзины -->
         <div class="modal fade" id="cartModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -435,7 +458,6 @@
                                         </tr>
                                     </thead>
                                     <tbody id="cart-items-table">
-                                        <!-- Товары в корзине -->
                                     </tbody>
                                 </table>
                             </div>
@@ -451,8 +473,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Модальное окно настроек профиля -->
         <div class="modal fade" id="profileModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -483,8 +503,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Модальное окно моих заказов -->
         <div class="modal fade" id="ordersModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -498,7 +516,6 @@
                             <p>Совершите покупки в нашем магазине</p>
                         </div>
                         <div id="orders-list" class="orders-list">
-                            <!-- Заказы будут загружаться здесь -->
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -507,16 +524,30 @@
                 </div>
             </div>
         </div>
+        <div class="modal fade" id="supportModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Техподдержка</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="support-chat" style="height: 300px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; padding: 10px; border-radius: 5px;"></div>
+                        <div class="mb-3">
+                            <textarea class="form-control" id="support-message" rows="3" placeholder="Введите ваше сообщение"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        <button type="button" class="btn btn-primary" id="send-support-message">Отправить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Firebase SDK -->
     <script type="module">
-        // Импорт необходимых модулей Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { 
             getAuth, 
@@ -542,7 +573,9 @@
             query,
             where,
             serverTimestamp,
-            orderBy
+            orderBy,
+            addDoc,
+            onSnapshot
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import {
             getStorage,
@@ -550,8 +583,6 @@
             uploadBytes,
             getDownloadURL
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-        // Конфигурация Firebase (замените на свою)
         const firebaseConfig = { 
             apiKey: "AIzaSyBHsEBhMrk8aHrIYYwYEGC-wRlaPxSyyr0",
             authDomain: "registr-f6a15.firebaseapp.com",
@@ -560,20 +591,14 @@
             messagingSenderId: "28854335183",
             appId: "1:28854335183:web:8bdb2b09d42850be4c29ba"
         };
-
-        // Инициализация Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
         const googleProvider = new GoogleAuthProvider();
-
-        // Константы
         const ADMIN_EMAIL = "alway6offline@gmail.com";
-        const TELEGRAM_BOT_TOKEN = "6818081299:AAGEDkvcZltkYKPELkGv8AuvRxpBzqMQLu8"; // Замените на ваш токен бота
-        const TELEGRAM_CHAT_ID = "1209403544"; // Замените на ваш chat_id
-
-        // Элементы DOM
+        const TELEGRAM_BOT_TOKEN = "6818081299:AAGEDkvcZltkYKPELkGv8AuvRxpBzqMQLu8";
+        const TELEGRAM_CHAT_ID = "1209403544";
         const elements = {
             loading: document.getElementById('loading'),
             registerForm: document.getElementById('register'),
@@ -589,16 +614,19 @@
             navAdminItem: document.getElementById('nav-admin-item'),
             navCart: document.getElementById('nav-cart'),
             navLogout: document.getElementById('nav-logout'),
+            navSupport: document.getElementById('nav-support'),
             userBalanceNav: document.getElementById('user-balance-nav'),
             productsContainer: document.getElementById('products-container'),
             adminProductsTable: document.getElementById('admin-products-table'),
             adminUsersTable: document.getElementById('admin-users-table'),
             adminOrdersTable: document.getElementById('admin-orders-table'),
+            adminSupportTable: document.getElementById('admin-support-table'),
             productModal: new bootstrap.Modal(document.getElementById('productModal')),
             balanceModal: new bootstrap.Modal(document.getElementById('balanceModal')),
             cartModal: new bootstrap.Modal(document.getElementById('cartModal')),
             profileModal: new bootstrap.Modal(document.getElementById('profileModal')),
             ordersModal: new bootstrap.Modal(document.getElementById('ordersModal')),
+            supportModal: new bootstrap.Modal(document.getElementById('supportModal')),
             profileDropdown: document.getElementById('profile-dropdown'),
             cartCounter: document.getElementById('cart-counter'),
             errorElements: {
@@ -613,8 +641,6 @@
                 }
             }
         };
-
-        // Состояние приложения
         const state = {
             currentUser: null,
             isAdmin: false,
@@ -623,10 +649,11 @@
             orders: [],
             cart: [],
             userBalance: 0,
-            userProfile: null
+            userProfile: null,
+            supportMessages: [],
+            supportChatId: null,
+            supportRequests: []
         };
-
-        // Утилиты
         const utils = {
             showError: (element, message) => {
                 element.textContent = message;
@@ -652,7 +679,6 @@
             validatePasswords: () => {
                 const password = document.getElementById('register-password').value;
                 const confirm = document.getElementById('register-password-confirm').value;
-                
                 if (password !== confirm) {
                     utils.showError(elements.errorElements.register.confirm, 'Пароли не совпадают');
                     return false;
@@ -679,8 +705,6 @@
                 return quantity > 9 ? '9+' : quantity;
             }
         };
-
-        // Отправка уведомлений в Telegram
         const sendTelegramNotification = async (message) => {
             try {
                 const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
@@ -692,10 +716,14 @@
                     body: JSON.stringify({
                         chat_id: TELEGRAM_CHAT_ID,
                         text: message,
-                        parse_mode: 'HTML'
+                        parse_mode: 'HTML',
+                        reply_markup: message.includes('/reply_') ? {
+                            inline_keyboard: [
+                                [{ text: "Ответить", callback_data: message.match(/\/reply_(.*)/)[1] }]
+                            ]
+                        } : undefined
                     })
                 });
-                
                 const data = await response.json();
                 if (!data.ok) {
                     console.error('Ошибка отправки сообщения в Telegram:', data);
@@ -704,8 +732,6 @@
                 console.error('Ошибка при отправке уведомления в Telegram:', error);
             }
         };
-
-        // Работа с Firestore
         const firestoreService = {
             getProducts: async () => {
                 const querySnapshot = await getDocs(collection(db, "products"));
@@ -784,27 +810,69 @@
             updateOrderStatus: async (orderId, status) => {
                 const docRef = doc(db, "orders", orderId);
                 await updateDoc(docRef, { status });
+            },
+            getSupportMessages: async (chatId) => {
+                const q = query(collection(db, "supportChats", chatId, "messages"), orderBy("createdAt"));
+                const querySnapshot = await getDocs(q);
+                const messages = [];
+                querySnapshot.forEach((doc) => {
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+                return messages;
+            },
+            addSupportMessage: async (chatId, message) => {
+                const messagesRef = collection(db, "supportChats", chatId, "messages");
+                const docRef = await addDoc(messagesRef, message);
+                return docRef.id;
+            },
+            getSupportRequests: async () => {
+                const chatsRef = collection(db, "supportChats");
+                const querySnapshot = await getDocs(chatsRef);
+                const requests = [];
+                for (const doc of querySnapshot.docs) {
+                    const messagesRef = collection(db, "supportChats", doc.id, "messages");
+                    const messagesQuery = query(messagesRef, orderBy("createdAt", "desc"), limit(1));
+                    const messagesSnapshot = await getDocs(messagesQuery);
+                    if (!messagesSnapshot.empty) {
+                        const lastMessage = messagesSnapshot.docs[0].data();
+                        const userDoc = await this.getUserData(doc.id);
+                        requests.push({
+                            chatId: doc.id,
+                            userId: doc.id,
+                            userEmail: userDoc?.email || 'Неизвестно',
+                            lastMessage: lastMessage.text,
+                            createdAt: lastMessage.createdAt,
+                            read: lastMessage.read,
+                            sender: lastMessage.sender
+                        });
+                    }
+                }
+                return requests.sort((a, b) => b.createdAt - a.createdAt);
+            },
+            markSupportMessageAsRead: async (chatId) => {
+                const messagesRef = collection(db, "supportChats", chatId, "messages");
+                const q = query(messagesRef, where("read", "==", false), where("sender", "==", "user"));
+                const querySnapshot = await getDocs(q);
+                const batch = writeBatch(db);
+                querySnapshot.forEach((doc) => {
+                    batch.update(doc.ref, { read: true });
+                });
+                await batch.commit();
             }
         };
-
-        // Обработчики событий
         const setupEventListeners = () => {
-            // Переключение между формами
             elements.showLogin.addEventListener('click', (e) => {
                 e.preventDefault();
                 utils.hideElement(elements.registerFormDiv);
                 utils.showElement(elements.loginFormDiv);
                 Object.values(elements.errorElements.register).forEach(el => utils.hideError(el));
             });
-
             elements.showRegister.addEventListener('click', (e) => {
                 e.preventDefault();
                 utils.hideElement(elements.loginFormDiv);
                 utils.showElement(elements.registerFormDiv);
                 Object.values(elements.errorElements.login).forEach(el => utils.hideError(el));
             });
-
-            // Валидация паролей при регистрации
             document.getElementById('register-password').addEventListener('input', () => {
                 if (document.getElementById('register-password').value.length < 6) {
                     utils.showError(elements.errorElements.register.password, 'Пароль должен содержать минимум 6 символов');
@@ -813,26 +881,19 @@
                 }
                 utils.validatePasswords();
             });
-
             document.getElementById('register-password-confirm').addEventListener('input', utils.validatePasswords);
-
-            // Регистрация нового пользователя
             elements.registerForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const registerButton = document.getElementById('register-button');
                 utils.toggleLoading(registerButton, true);
-                
                 const email = document.getElementById('register-email').value;
                 const password = document.getElementById('register-password').value;
-
                 if (!utils.validatePasswords()) {
                     utils.toggleLoading(registerButton, false);
                     return;
                 }
-
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    
                     await setDoc(doc(db, "users", userCredential.user.uid), {
                         email: userCredential.user.email,
                         balance: 0,
@@ -842,14 +903,11 @@
                         phone: '',
                         address: ''
                     });
-                    
                     await sendEmailVerification(userCredential.user);
-                    
                     alert('Регистрация прошла успешно! Письмо для подтверждения email отправлено на вашу почту.');
                     elements.registerForm.reset();
                 } catch (error) {
                     let errorMessage = 'Ошибка регистрации';
-                    
                     switch (error.code) {
                         case 'auth/email-already-in-use':
                             errorMessage = 'Этот email уже используется';
@@ -870,22 +928,17 @@
                     utils.toggleLoading(registerButton, false);
                 }
             });
-
-            // Вход пользователя
             elements.loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const loginButton = document.getElementById('login-button');
                 utils.toggleLoading(loginButton, true);
-                
                 const email = document.getElementById('login-email').value;
                 const password = document.getElementById('login-password').value;
-
                 try {
                     await signInWithEmailAndPassword(auth, email, password);
                     elements.loginForm.reset();
                 } catch (error) {
                     let errorMessage = 'Ошибка входа';
-                    
                     switch (error.code) {
                         case 'auth/user-not-found':
                             errorMessage = 'Пользователь с таким email не найден';
@@ -910,20 +963,15 @@
                     utils.toggleLoading(loginButton, false);
                 }
             });
-
-            // Выход пользователя
             elements.navLogout.addEventListener('click', () => {
                 signOut(auth).catch((error) => {
                     alert(`Ошибка при выходе: ${error.message}`);
                 });
             });
-
-            // Вход через Google
             const handleGoogleSignIn = async () => {
                 try {
                     const result = await signInWithPopup(auth, googleProvider);
                     const user = result.user;
-                    
                     const userDoc = await firestoreService.getUserData(user.uid);
                     if (!userDoc) {
                         await setDoc(doc(db, "users", user.uid), {
@@ -940,45 +988,35 @@
                     alert(`Ошибка входа через Google: ${error.message}`);
                 }
             };
-
             document.getElementById('google-signin').addEventListener('click', handleGoogleSignIn);
             document.getElementById('google-signin-login').addEventListener('click', handleGoogleSignIn);
-
-            // Навигация
             elements.navHome.addEventListener('click', (e) => {
                 e.preventDefault();
                 utils.hideElement(elements.adminContent);
                 utils.showElement(elements.shopContent);
                 renderProducts();
             });
-
             elements.navAdmin.addEventListener('click', (e) => {
                 e.preventDefault();
                 utils.hideElement(elements.shopContent);
                 utils.showElement(elements.adminContent);
                 loadAdminData();
             });
-
-            // Корзина
             elements.navCart.addEventListener('click', (e) => {
                 e.preventDefault();
                 renderCart();
                 elements.cartModal.show();
             });
-
-            // Профиль
             document.getElementById('profile-settings').addEventListener('click', (e) => {
                 e.preventDefault();
                 loadProfileData();
                 elements.profileModal.show();
             });
-
             document.getElementById('profile-orders').addEventListener('click', async (e) => {
                 e.preventDefault();
                 await loadUserOrders();
                 elements.ordersModal.show();
             });
-
             document.getElementById('save-profile-btn').addEventListener('click', async () => {
                 const profileData = {
                     name: document.getElementById('profile-name').value,
@@ -986,7 +1024,6 @@
                     address: document.getElementById('profile-address').value,
                     updatedAt: serverTimestamp()
                 };
-
                 try {
                     await firestoreService.updateUserData(state.currentUser.uid, profileData);
                     state.userProfile = { ...state.userProfile, ...profileData };
@@ -996,8 +1033,6 @@
                     alert(`Ошибка при сохранении настроек: ${error.message}`);
                 }
             });
-
-            // Админка: товары
             document.getElementById('add-product-btn').addEventListener('click', () => {
                 document.getElementById('productModalTitle').textContent = 'Добавить товар';
                 document.getElementById('productForm').reset();
@@ -1005,7 +1040,6 @@
                 document.getElementById('product-discount').value = 0;
                 elements.productModal.show();
             });
-
             document.getElementById('save-product-btn').addEventListener('click', async () => {
                 const product = {
                     name: document.getElementById('product-name').value,
@@ -1017,16 +1051,13 @@
                     category: document.getElementById('product-category').value,
                     updatedAt: serverTimestamp()
                 };
-
                 const productId = document.getElementById('product-id').value;
-
                 try {
                     if (productId) {
                         await firestoreService.updateProduct(productId, product);
                     } else {
                         await firestoreService.addProduct(product);
                     }
-                    
                     elements.productModal.hide();
                     loadAdminData();
                     renderProducts();
@@ -1034,8 +1065,6 @@
                     alert(`Ошибка при сохранении товара: ${error.message}`);
                 }
             });
-
-            // Админка: пользователи
             document.getElementById('user-search').addEventListener('input', async (e) => {
                 const searchTerm = e.target.value.toLowerCase();
                 const filteredUsers = state.users.filter(user => 
@@ -1043,50 +1072,37 @@
                 );
                 renderUsersTable(filteredUsers);
             });
-
-            // Админка: баланс пользователя
             document.getElementById('save-balance-btn').addEventListener('click', async () => {
                 const userId = document.getElementById('balance-user-email').getAttribute('data-user-id');
                 const change = parseFloat(document.getElementById('balance-change').value);
-                
                 if (isNaN(change)) {
                     alert('Введите корректную сумму');
                     return;
                 }
-
                 try {
                     const userDoc = await firestoreService.getUserData(userId);
                     const newBalance = (userDoc.balance || 0) + change;
-                    
                     await firestoreService.updateUserData(userId, { balance: newBalance });
-                    
                     const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
                     if (userRow) {
                         userRow.querySelector('.user-balance').textContent = utils.formatPrice(newBalance);
                     }
-                    
                     if (state.currentUser && state.currentUser.uid === userId) {
                         state.userBalance = newBalance;
                         updateUserBalanceDisplay();
                     }
-                    
                     elements.balanceModal.hide();
                     alert('Баланс успешно обновлен');
                 } catch (error) {
                     alert(`Ошибка при обновлении баланса: ${error.message}`);
                 }
             });
-
-            // Админка: заказы
             document.getElementById('admin-orders-table').addEventListener('click', async (e) => {
                 if (e.target.classList.contains('update-order-status')) {
                     const orderId = e.target.getAttribute('data-order-id');
                     const newStatus = e.target.getAttribute('data-status');
-                    
                     try {
                         await firestoreService.updateOrderStatus(orderId, newStatus);
-                        
-                        // Если заказ подтвержден, отправляем уведомление в Telegram
                         if (newStatus === 'paid') {
                             const order = state.orders.find(o => o.id === orderId);
                             if (order) {
@@ -1099,11 +1115,9 @@
                                     `Товары:\n${order.items.map(item => 
                                         `- ${item.name} × ${item.quantity} (${utils.formatPrice(item.price)} ₽)`
                                     ).join('\n')}`;
-                                
                                 await sendTelegramNotification(message);
                             }
                         }
-                        
                         loadAdminData();
                         alert('Статус заказа обновлен');
                     } catch (error) {
@@ -1111,18 +1125,13 @@
                     }
                 }
             });
-
-            // Корзина: оформление заказа
             document.getElementById('checkout-btn').addEventListener('click', async () => {
                 if (state.cart.length === 0) return;
-                
                 const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                
                 if (state.userBalance < total) {
                     alert('Недостаточно средств на балансе');
                     return;
                 }
-                
                 try {
                     const orderId = await firestoreService.createOrder(state.currentUser.uid, {
                         items: state.cart.map(item => ({
@@ -1136,21 +1145,13 @@
                         total,
                         status: 'pending'
                     });
-                    
-                    // Списываем деньги с баланса пользователя
                     const newBalance = state.userBalance - total;
                     await firestoreService.updateUserData(state.currentUser.uid, { balance: newBalance });
-                    
-                    // Очищаем корзину
                     await firestoreService.updateCart(state.currentUser.uid, []);
                     state.cart = [];
-                    
-                    // Обновляем состояние приложения
                     state.userBalance = newBalance;
                     updateUserBalanceDisplay();
                     updateCartCounter();
-                    
-                    // Отправляем уведомление в Telegram о новом заказе
                     const message = `🛒 <b>Новый заказ</b>\n\n` +
                         `ID заказа: ${orderId}\n` +
                         `Пользователь: ${state.currentUser.email}\n` +
@@ -1158,9 +1159,7 @@
                         `Товары:\n${state.cart.map(item => 
                             `- ${item.name} × ${item.quantity} (${utils.formatPrice(item.price)} ₽)`
                         ).join('\n')}`;
-                    
                     await sendTelegramNotification(message);
-                    
                     elements.cartModal.hide();
                     alert(`Заказ #${orderId} успешно оформлен! Ожидайте подтверждения.`);
                     renderProducts();
@@ -1168,26 +1167,58 @@
                     alert(`Ошибка при оформлении заказа: ${error.message}`);
                 }
             });
+            elements.navSupport.addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (!state.currentUser) {
+                    alert('Для обращения в поддержку необходимо авторизоваться');
+                    return;
+                }
+                await loadSupportMessages();
+                elements.supportModal.show();
+            });
+            document.getElementById('send-support-message').addEventListener('click', async () => {
+                const message = document.getElementById('support-message').value.trim();
+                if (!message) return;
+                try {
+                    if (!state.supportChatId) {
+                        const chatDoc = doc(collection(db, "supportChats"), state.currentUser.uid);
+                        await setDoc(chatDoc, { userId: state.currentUser.uid }, { merge: true });
+                        state.supportChatId = state.currentUser.uid;
+                    }
+                    const newMessage = {
+                        text: message,
+                        sender: 'user',
+                        createdAt: serverTimestamp(),
+                        read: false
+                    };
+                    
+                    await firestoreService.addSupportMessage(state.supportChatId, newMessage);
+                    const telegramMessage = `🆘 <b>Новое сообщение в поддержку</b>\n\n` +
+                        `Пользователь: ${state.currentUser.email}\n` +
+                        `Сообщение: ${message}\n\n` +
+                        `Ответить: /reply_${state.supportChatId}`;
+                    await sendTelegramNotification(telegramMessage);
+                    document.getElementById('support-message').value = '';
+                    await loadSupportMessages();
+                } catch (error) {
+                    console.error('Ошибка при отправке сообщения:', error);
+                    alert('Не удалось отправить сообщение в поддержку');
+                }
+            });
         };
-
-        // Рендеринг
         const renderProducts = () => {
             if (!state.products.length) {
                 elements.productsContainer.innerHTML = '<div class="col-12 text-center py-5"><h4>Товары не найдены</h4></div>';
                 return;
             }
-
             elements.productsContainer.innerHTML = '';
-            
             state.products.forEach(product => {
                 const productCard = document.createElement('div');
                 productCard.className = 'col-md-4 mb-4';
-                
                 const discount = product.discount || 0;
                 const finalPrice = utils.calculateDiscountedPrice(product.price, discount);
                 const cartItem = state.cart.find(item => item.id === product.id);
                 const quantityInCart = cartItem ? cartItem.quantity : 0;
-                
                 productCard.innerHTML = `
                     <div class="card product-card h-100">
                         ${product.image ? `<img src="${product.image}" class="card-img-top" alt="${product.name}" style="height: 200px; object-fit: cover;">` : ''}
@@ -1222,11 +1253,8 @@
                         </div>
                     </div>
                 `;
-                
                 elements.productsContainer.appendChild(productCard);
             });
-
-            // Обработчики для изменения количества в карточке товара
             document.querySelectorAll('.increase-cart').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('[data-product-id]').getAttribute('data-product-id');
@@ -1240,7 +1268,6 @@
                     }
                 });
             });
-            
             document.querySelectorAll('.decrease-cart').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('[data-product-id]').getAttribute('data-product-id');
@@ -1258,17 +1285,14 @@
                     }
                 });
             });
-            
             document.querySelectorAll('.cart-quantity-input').forEach(input => {
                 input.addEventListener('change', async (e) => {
                     const productId = e.target.getAttribute('data-product-id');
                     const quantity = parseInt(e.target.value);
-                    
                     if (quantity < 1) {
                         e.target.value = 1;
                         return;
                     }
-                    
                     const item = state.cart.find(item => item.id === productId);
                     if (item) {
                         item.quantity = quantity;
@@ -1279,17 +1303,13 @@
                     }
                 });
             });
-
-            // Обработчик добавления в корзину
             document.querySelectorAll('.add-to-cart').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.add-to-cart').getAttribute('data-product-id');
                     const product = state.products.find(p => p.id === productId);
-                    
                     if (product) {
                         const discount = product.discount || 0;
                         const discountedPrice = utils.calculateDiscountedPrice(product.price, discount);
-                        
                         state.cart.push({
                             id: product.id,
                             name: product.name,
@@ -1298,7 +1318,6 @@
                             quantity: 1,
                             image: product.image
                         });
-                        
                         await firestoreService.updateCart(state.currentUser.uid, state.cart);
                         renderCart();
                         renderProducts();
@@ -1307,10 +1326,8 @@
                 });
             });
         };
-
         const renderAdminProductsTable = () => {
             elements.adminProductsTable.innerHTML = '';
-            
             state.products.forEach(product => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1329,15 +1346,12 @@
                         </button>
                     </td>
                 `;
-                
                 elements.adminProductsTable.appendChild(row);
             });
-
             document.querySelectorAll('.edit-product').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.edit-product').getAttribute('data-product-id');
                     const product = state.products.find(p => p.id === productId);
-                    
                     if (product) {
                         document.getElementById('productModalTitle').textContent = 'Редактировать товар';
                         document.getElementById('product-id').value = product.id;
@@ -1348,16 +1362,13 @@
                         document.getElementById('product-description').value = product.description || '';
                         document.getElementById('product-image').value = product.image || '';
                         document.getElementById('product-category').value = product.category || '';
-                        
                         elements.productModal.show();
                     }
                 });
             });
-
             document.querySelectorAll('.delete-product').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.delete-product').getAttribute('data-product-id');
-                    
                     if (confirm('Вы уверены, что хотите удалить этот товар?')) {
                         try {
                             await firestoreService.deleteProduct(productId);
@@ -1370,10 +1381,8 @@
                 });
             });
         };
-
         const renderUsersTable = (users = state.users) => {
             elements.adminUsersTable.innerHTML = '';
-            
             users.forEach(user => {
                 const row = document.createElement('tr');
                 row.setAttribute('data-user-id', user.id);
@@ -1390,29 +1399,23 @@
                         </button>` : ''}
                     </td>
                 `;
-                
                 elements.adminUsersTable.appendChild(row);
             });
-
             document.querySelectorAll('.edit-balance').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const userId = e.target.closest('.edit-balance').getAttribute('data-user-id');
                     const userEmail = e.target.closest('.edit-balance').getAttribute('data-user-email');
                     const user = state.users.find(u => u.id === userId);
-                    
                     document.getElementById('balance-user-email').textContent = userEmail;
                     document.getElementById('balance-user-email').setAttribute('data-user-id', userId);
                     document.getElementById('current-balance').textContent = utils.formatPrice(user.balance || 0);
                     document.getElementById('balance-change').value = '';
-                    
                     elements.balanceModal.show();
                 });
             });
-
             document.querySelectorAll('.delete-user').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const userId = e.target.closest('.delete-user').getAttribute('data-user-id');
-                    
                     if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
                         try {
                             await deleteDoc(doc(db, "users", userId));
@@ -1424,10 +1427,8 @@
                 });
             });
         };
-
         const renderAdminOrdersTable = () => {
             elements.adminOrdersTable.innerHTML = '';
-            
             state.orders.forEach(order => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1448,26 +1449,44 @@
                         ` : ''}
                     </td>
                 `;
-                
                 elements.adminOrdersTable.appendChild(row);
             });
         };
-
+        const renderAdminSupportTable = () => {
+            elements.adminSupportTable.innerHTML = '';
+            state.supportRequests.forEach(request => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${request.userEmail}</td>
+                    <td>${request.lastMessage.length > 50 ? request.lastMessage.substring(0, 50) + '...' : request.lastMessage}</td>
+                    <td>${request.createdAt?.toDate().toLocaleString() || 'Неизвестно'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary view-support-chat" data-chat-id="${request.chatId}">
+                            <i class="bi bi-chat-left-text"></i> Чат
+                        </button>
+                    </td>
+                `;
+                elements.adminSupportTable.appendChild(row);
+            });
+            document.querySelectorAll('.view-support-chat').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const chatId = e.target.closest('.view-support-chat').getAttribute('data-chat-id');
+                    // Здесь можно реализовать просмотр чата поддержки
+                    alert(`Открыть чат с пользователем: ${chatId}`);
+                });
+            });
+        };
         const renderUserOrders = () => {
             const ordersList = document.getElementById('orders-list');
             ordersList.innerHTML = '';
-            
             if (state.orders.length === 0) {
                 utils.showElement(document.getElementById('orders-empty'));
                 return;
             }
-            
             utils.hideElement(document.getElementById('orders-empty'));
-            
             state.orders.forEach(order => {
                 const orderElement = document.createElement('div');
                 orderElement.className = 'order-item';
-                
                 let itemsHtml = '';
                 order.items.forEach(item => {
                     itemsHtml += `
@@ -1483,7 +1502,6 @@
                         </div>
                     `;
                 });
-                
                 orderElement.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h5>Заказ #${order.id.substring(0, 8)}</h5>
@@ -1502,17 +1520,36 @@
                     </div>
                     <hr>
                 `;
-                
                 ordersList.appendChild(orderElement);
             });
         };
-
+        const renderSupportChat = () => {
+            const chatContainer = document.getElementById('support-chat');
+            chatContainer.innerHTML = '';
+            if (state.supportMessages.length === 0) {
+                chatContainer.innerHTML = '<div class="text-muted text-center py-4">Нет сообщений. Напишите нам, и мы ответим!</div>';
+                return;
+            }
+            state.supportMessages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `support-message ${msg.sender === 'user' ? 'user' : 'admin'}`;
+                const date = msg.createdAt?.toDate ? msg.createdAt.toDate() : new Date();
+                messageDiv.innerHTML = `
+                    <div>${msg.text}</div>
+                    <div class="support-meta">
+                        ${msg.sender === 'user' ? 'Вы' : 'Поддержка'} • 
+                        ${date.toLocaleString()}
+                    </div>
+                `;
+                chatContainer.appendChild(messageDiv);
+            });
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        };
         const renderCart = () => {
             const cartItemsTable = document.getElementById('cart-items-table');
             const cartEmpty = document.getElementById('cart-empty');
             const cartItems = document.getElementById('cart-items');
             const checkoutBtn = document.getElementById('checkout-btn');
-            
             if (state.cart.length === 0) {
                 utils.showElement(cartEmpty);
                 utils.hideElement(cartItems);
@@ -1520,20 +1557,15 @@
                 updateCartCounter();
                 return;
             }
-            
             utils.hideElement(cartEmpty);
             utils.showElement(cartItems);
             utils.showElement(checkoutBtn);
-            
             cartItemsTable.innerHTML = '';
-            
             let total = 0;
-            
             state.cart.forEach(item => {
                 const row = document.createElement('tr');
                 const itemTotal = item.price * item.quantity;
                 total += itemTotal;
-                
                 row.innerHTML = `
                     <td>
                         ${item.image ? `<img src="${item.image}" alt="${item.name}" style="height: 50px; margin-right: 10px;">` : ''}
@@ -1561,13 +1593,10 @@
                         </button>
                     </td>
                 `;
-                
                 cartItemsTable.appendChild(row);
             });
-            
             document.getElementById('cart-total').textContent = utils.formatPrice(total);
             updateCartCounter();
-            
             document.querySelectorAll('.increase-quantity').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.increase-quantity').getAttribute('data-product-id');
@@ -1580,7 +1609,6 @@
                     }
                 });
             });
-            
             document.querySelectorAll('.decrease-quantity').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.decrease-quantity').getAttribute('data-product-id');
@@ -1597,7 +1625,6 @@
                     }
                 });
             });
-            
             document.querySelectorAll('.remove-from-cart').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.remove-from-cart').getAttribute('data-product-id');
@@ -1607,17 +1634,14 @@
                     renderProducts();
                 });
             });
-            
             document.querySelectorAll('#cart-items-table input[type="number"]').forEach(input => {
                 input.addEventListener('change', async (e) => {
                     const productId = e.target.getAttribute('data-product-id');
                     const quantity = parseInt(e.target.value);
-                    
                     if (quantity < 1) {
                         e.target.value = 1;
                         return;
                     }
-                    
                     const item = state.cart.find(item => item.id === productId);
                     if (item) {
                         item.quantity = quantity;
@@ -1628,11 +1652,9 @@
                 });
             });
         };
-
         const updateUserBalanceDisplay = () => {
             elements.userBalanceNav.textContent = `Баланс: ${utils.formatPrice(state.userBalance)} ₽`;
         };
-
         const updateCartCounter = () => {
             const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
             elements.cartCounter.textContent = totalItems > 9 ? '9+' : totalItems;
@@ -1642,15 +1664,12 @@
                 utils.hideElement(elements.cartCounter);
             }
         };
-
-        // Загрузка данных
         const loadAdminData = async () => {
             try {
                 state.products = await firestoreService.getProducts();
                 state.users = await firestoreService.getAllUsers();
                 state.orders = await firestoreService.getAllOrders();
-                
-                // Добавляем email пользователей к заказам
+                state.supportRequests = await firestoreService.getSupportRequests();
                 state.orders = await Promise.all(state.orders.map(async order => {
                     const userDoc = await firestoreService.getUserData(order.userId);
                     return {
@@ -1658,22 +1677,20 @@
                         userEmail: userDoc?.email || 'Неизвестно'
                     };
                 }));
-                
                 renderAdminProductsTable();
                 renderUsersTable();
                 renderAdminOrdersTable();
+                renderAdminSupportTable();
             } catch (error) {
                 console.error('Ошибка при загрузке данных:', error);
             }
         };
-
         const loadCart = async () => {
             if (state.currentUser) {
                 state.cart = await firestoreService.getCart(state.currentUser.uid);
                 updateCartCounter();
             }
         };
-
         const loadProfileData = async () => {
             if (state.currentUser) {
                 state.userProfile = await firestoreService.getUserData(state.currentUser.uid);
@@ -1684,45 +1701,49 @@
                 }
             }
         };
-
         const loadUserOrders = async () => {
             if (state.currentUser) {
                 state.orders = await firestoreService.getUserOrders(state.currentUser.uid);
                 renderUserOrders();
             }
         };
-
-        // Инициализация приложения
+        const loadSupportMessages = async () => {
+            if (!state.currentUser) return;
+            try {
+                state.supportChatId = state.currentUser.uid;
+                state.supportMessages = await firestoreService.getSupportMessages(state.supportChatId);
+                renderSupportChat();
+                const q = query(collection(db, "supportChats", state.supportChatId, "messages"), orderBy("createdAt"));
+                onSnapshot(q, (snapshot) => {
+                    state.supportMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderSupportChat();
+                });
+            } catch (error) {
+                console.error('Ошибка при загрузке сообщений поддержки:', error);
+            }
+        };
         const initApp = async () => {
             setupEventListeners();
-            
             onAuthStateChanged(auth, async (user) => {
                 utils.hideElement(elements.loading);
-                
                 if (user) {
                     state.currentUser = user;
-                    
                     const userData = await firestoreService.getUserData(user.uid);
                     state.isAdmin = user.email === ADMIN_EMAIL || userData?.isAdmin || false;
                     state.userBalance = userData?.balance || 0;
                     state.userProfile = userData;
-                    
                     updateUserBalanceDisplay();
-                    
                     if (state.isAdmin) {
                         utils.showElement(elements.navAdminItem);
                     } else {
                         utils.hideElement(elements.navAdminItem);
                     }
-                    
                     utils.showElement(elements.navCart);
                     utils.showElement(elements.profileDropdown);
                     utils.hideElement(elements.registerFormDiv);
                     utils.hideElement(elements.loginFormDiv);
-                    
                     state.products = await firestoreService.getProducts();
                     await loadCart();
-                    
                     utils.showElement(elements.shopContent);
                     utils.hideElement(elements.adminContent);
                     renderProducts();
@@ -1732,20 +1753,16 @@
                     state.userBalance = 0;
                     state.cart = [];
                     state.userProfile = null;
-                    
                     utils.hideElement(elements.navAdminItem);
                     utils.hideElement(elements.navCart);
                     utils.hideElement(elements.profileDropdown);
                     utils.hideElement(elements.shopContent);
                     utils.hideElement(elements.adminContent);
-                    
                     utils.showElement(elements.registerFormDiv);
                     utils.hideElement(elements.loginFormDiv);
                 }
             });
         };
-
-        // Запуск приложения
         initApp();
     </script>
 </body>
