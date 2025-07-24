@@ -118,6 +118,12 @@
             color: #666;
             margin-top: 5px;
         }
+        .delete-account-btn {
+            color: #dc3545;
+        }
+        .support-link {
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
@@ -154,6 +160,7 @@
                                 <li><a class="dropdown-item" href="#" id="profile-settings"><i class="bi bi-gear"></i> Настройки</a></li>
                                 <li><a class="dropdown-item" href="#" id="profile-orders"><i class="bi bi-box-seam"></i> Мои заказы</a></li>
                                 <li><hr class="dropdown-divider"></li>
+                                <li><button class="dropdown-item delete-account-btn" id="delete-account-btn"><i class="bi bi-trash"></i> Удалить аккаунт</button></li>
                                 <li><button class="dropdown-item" id="nav-logout"><i class="bi bi-box-arrow-right"></i> Выйти</button></li>
                             </ul>
                         </div>
@@ -536,10 +543,52 @@
                         <div class="mb-3">
                             <textarea class="form-control" id="support-message" rows="3" placeholder="Введите ваше сообщение"></textarea>
                         </div>
+                        <div id="support-link-container" class="hidden">
+                            <p class="mb-1">Ссылка для ответа на это обращение:</p>
+                            <a href="#" id="support-link" class="support-link" target="_blank"></a>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
                         <button type="button" class="btn btn-primary" id="send-support-message">Отправить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="deleteAccountModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Удаление аккаунта</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Вы уверены, что хотите удалить свой аккаунт? Это действие нельзя отменить.</p>
+                        <p>Все ваши данные, включая заказы и историю, будут удалены.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-danger" id="confirm-delete-account">Удалить аккаунт</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="adminSupportModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Чат поддержки</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="admin-support-chat" style="height: 400px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; padding: 10px; border-radius: 5px;"></div>
+                        <div class="mb-3">
+                            <textarea class="form-control" id="admin-support-message" rows="3" placeholder="Введите ваш ответ"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        <button type="button" class="btn btn-primary" id="send-admin-support-message">Отправить</button>
                     </div>
                 </div>
             </div>
@@ -575,7 +624,9 @@
             serverTimestamp,
             orderBy,
             addDoc,
-            onSnapshot
+            onSnapshot,
+            writeBatch,
+            limit
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import {
             getStorage,
@@ -583,6 +634,7 @@
             uploadBytes,
             getDownloadURL
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
         const firebaseConfig = { 
             apiKey: "AIzaSyBHsEBhMrk8aHrIYYwYEGC-wRlaPxSyyr0",
             authDomain: "registr-f6a15.firebaseapp.com",
@@ -591,14 +643,18 @@
             messagingSenderId: "28854335183",
             appId: "1:28854335183:web:8bdb2b09d42850be4c29ba"
         };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
         const googleProvider = new GoogleAuthProvider();
+
         const ADMIN_EMAIL = "alway6offline@gmail.com";
         const TELEGRAM_BOT_TOKEN = "6818081299:AAGEDkvcZltkYKPELkGv8AuvRxpBzqMQLu8";
         const TELEGRAM_CHAT_ID = "1209403544";
+        const SITE_URL = window.location.origin; // URL вашего сайта
+
         const elements = {
             loading: document.getElementById('loading'),
             registerForm: document.getElementById('register'),
@@ -627,6 +683,8 @@
             profileModal: new bootstrap.Modal(document.getElementById('profileModal')),
             ordersModal: new bootstrap.Modal(document.getElementById('ordersModal')),
             supportModal: new bootstrap.Modal(document.getElementById('supportModal')),
+            deleteAccountModal: new bootstrap.Modal(document.getElementById('deleteAccountModal')),
+            adminSupportModal: new bootstrap.Modal(document.getElementById('adminSupportModal')),
             profileDropdown: document.getElementById('profile-dropdown'),
             cartCounter: document.getElementById('cart-counter'),
             errorElements: {
@@ -641,6 +699,7 @@
                 }
             }
         };
+
         const state = {
             currentUser: null,
             isAdmin: false,
@@ -652,8 +711,10 @@
             userProfile: null,
             supportMessages: [],
             supportChatId: null,
-            supportRequests: []
+            supportRequests: [],
+            currentSupportChat: null
         };
+
         const utils = {
             showError: (element, message) => {
                 element.textContent = message;
@@ -703,8 +764,12 @@
             },
             formatQuantity: (quantity) => {
                 return quantity > 9 ? '9+' : quantity;
+            },
+            generateSupportLink: (chatId) => {
+                return `${SITE_URL}/support.html?chatId=${chatId}`;
             }
         };
+
         const sendTelegramNotification = async (message) => {
             try {
                 const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
@@ -719,7 +784,7 @@
                         parse_mode: 'HTML',
                         reply_markup: message.includes('/reply_') ? {
                             inline_keyboard: [
-                                [{ text: "Ответить", callback_data: message.match(/\/reply_(.*)/)[1] }]
+                                [{ text: "Ответить", url: utils.generateSupportLink(message.match(/\/reply_(.*)/)[1]) }]
                             ]
                         } : undefined
                     })
@@ -732,6 +797,7 @@
                 console.error('Ошибка при отправке уведомления в Telegram:', error);
             }
         };
+
         const firestoreService = {
             getProducts: async () => {
                 const querySnapshot = await getDocs(collection(db, "products"));
@@ -761,6 +827,10 @@
             updateUserData: async (userId, data) => {
                 const docRef = doc(db, "users", userId);
                 await updateDoc(docRef, data);
+            },
+            deleteUserData: async (userId) => {
+                await deleteDoc(doc(db, "users", userId));
+                await deleteDoc(doc(db, "carts", userId));
             },
             getAllUsers: async () => {
                 const querySnapshot = await getDocs(collection(db, "users"));
@@ -860,6 +930,7 @@
                 await batch.commit();
             }
         };
+
         const setupEventListeners = () => {
             elements.showLogin.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -867,12 +938,14 @@
                 utils.showElement(elements.loginFormDiv);
                 Object.values(elements.errorElements.register).forEach(el => utils.hideError(el));
             });
+
             elements.showRegister.addEventListener('click', (e) => {
                 e.preventDefault();
                 utils.hideElement(elements.loginFormDiv);
                 utils.showElement(elements.registerFormDiv);
                 Object.values(elements.errorElements.login).forEach(el => utils.hideError(el));
             });
+
             document.getElementById('register-password').addEventListener('input', () => {
                 if (document.getElementById('register-password').value.length < 6) {
                     utils.showError(elements.errorElements.register.password, 'Пароль должен содержать минимум 6 символов');
@@ -881,17 +954,21 @@
                 }
                 utils.validatePasswords();
             });
+
             document.getElementById('register-password-confirm').addEventListener('input', utils.validatePasswords);
+
             elements.registerForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const registerButton = document.getElementById('register-button');
                 utils.toggleLoading(registerButton, true);
                 const email = document.getElementById('register-email').value;
                 const password = document.getElementById('register-password').value;
+
                 if (!utils.validatePasswords()) {
                     utils.toggleLoading(registerButton, false);
                     return;
                 }
+
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await setDoc(doc(db, "users", userCredential.user.uid), {
@@ -928,12 +1005,14 @@
                     utils.toggleLoading(registerButton, false);
                 }
             });
+
             elements.loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const loginButton = document.getElementById('login-button');
                 utils.toggleLoading(loginButton, true);
                 const email = document.getElementById('login-email').value;
                 const password = document.getElementById('login-password').value;
+
                 try {
                     await signInWithEmailAndPassword(auth, email, password);
                     elements.loginForm.reset();
@@ -963,11 +1042,33 @@
                     utils.toggleLoading(loginButton, false);
                 }
             });
+
             elements.navLogout.addEventListener('click', () => {
                 signOut(auth).catch((error) => {
                     alert(`Ошибка при выходе: ${error.message}`);
                 });
             });
+
+            document.getElementById('delete-account-btn').addEventListener('click', async (e) => {
+                e.preventDefault();
+                elements.deleteAccountModal.show();
+            });
+
+            document.getElementById('confirm-delete-account').addEventListener('click', async () => {
+                try {
+                    const user = auth.currentUser;
+                    // Удаляем данные пользователя из Firestore
+                    await firestoreService.deleteUserData(user.uid);
+                    // Удаляем сам аккаунт
+                    await deleteUser(user);
+                    alert('Ваш аккаунт был успешно удален');
+                    elements.deleteAccountModal.hide();
+                } catch (error) {
+                    console.error('Ошибка при удалении аккаунта:', error);
+                    alert(`Ошибка при удалении аккаунта: ${error.message}`);
+                }
+            });
+
             const handleGoogleSignIn = async () => {
                 try {
                     const result = await signInWithPopup(auth, googleProvider);
@@ -988,35 +1089,42 @@
                     alert(`Ошибка входа через Google: ${error.message}`);
                 }
             };
+
             document.getElementById('google-signin').addEventListener('click', handleGoogleSignIn);
             document.getElementById('google-signin-login').addEventListener('click', handleGoogleSignIn);
+
             elements.navHome.addEventListener('click', (e) => {
                 e.preventDefault();
                 utils.hideElement(elements.adminContent);
                 utils.showElement(elements.shopContent);
                 renderProducts();
             });
+
             elements.navAdmin.addEventListener('click', (e) => {
                 e.preventDefault();
                 utils.hideElement(elements.shopContent);
                 utils.showElement(elements.adminContent);
                 loadAdminData();
             });
+
             elements.navCart.addEventListener('click', (e) => {
                 e.preventDefault();
                 renderCart();
                 elements.cartModal.show();
             });
+
             document.getElementById('profile-settings').addEventListener('click', (e) => {
                 e.preventDefault();
                 loadProfileData();
                 elements.profileModal.show();
             });
+
             document.getElementById('profile-orders').addEventListener('click', async (e) => {
                 e.preventDefault();
                 await loadUserOrders();
                 elements.ordersModal.show();
             });
+
             document.getElementById('save-profile-btn').addEventListener('click', async () => {
                 const profileData = {
                     name: document.getElementById('profile-name').value,
@@ -1033,6 +1141,7 @@
                     alert(`Ошибка при сохранении настроек: ${error.message}`);
                 }
             });
+
             document.getElementById('add-product-btn').addEventListener('click', () => {
                 document.getElementById('productModalTitle').textContent = 'Добавить товар';
                 document.getElementById('productForm').reset();
@@ -1040,6 +1149,7 @@
                 document.getElementById('product-discount').value = 0;
                 elements.productModal.show();
             });
+
             document.getElementById('save-product-btn').addEventListener('click', async () => {
                 const product = {
                     name: document.getElementById('product-name').value,
@@ -1065,6 +1175,7 @@
                     alert(`Ошибка при сохранении товара: ${error.message}`);
                 }
             });
+
             document.getElementById('user-search').addEventListener('input', async (e) => {
                 const searchTerm = e.target.value.toLowerCase();
                 const filteredUsers = state.users.filter(user => 
@@ -1072,6 +1183,7 @@
                 );
                 renderUsersTable(filteredUsers);
             });
+
             document.getElementById('save-balance-btn').addEventListener('click', async () => {
                 const userId = document.getElementById('balance-user-email').getAttribute('data-user-id');
                 const change = parseFloat(document.getElementById('balance-change').value);
@@ -1097,6 +1209,7 @@
                     alert(`Ошибка при обновлении баланса: ${error.message}`);
                 }
             });
+
             document.getElementById('admin-orders-table').addEventListener('click', async (e) => {
                 if (e.target.classList.contains('update-order-status')) {
                     const orderId = e.target.getAttribute('data-order-id');
@@ -1125,6 +1238,7 @@
                     }
                 }
             });
+
             document.getElementById('checkout-btn').addEventListener('click', async () => {
                 if (state.cart.length === 0) return;
                 const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -1167,6 +1281,7 @@
                     alert(`Ошибка при оформлении заказа: ${error.message}`);
                 }
             });
+
             elements.navSupport.addEventListener('click', async (e) => {
                 e.preventDefault();
                 if (!state.currentUser) {
@@ -1176,6 +1291,7 @@
                 await loadSupportMessages();
                 elements.supportModal.show();
             });
+
             document.getElementById('send-support-message').addEventListener('click', async () => {
                 const message = document.getElementById('support-message').value.trim();
                 if (!message) return;
@@ -1193,11 +1309,19 @@
                     };
                     
                     await firestoreService.addSupportMessage(state.supportChatId, newMessage);
+                    
+                    // Генерируем ссылку для ответа
+                    const supportLink = utils.generateSupportLink(state.supportChatId);
+                    document.getElementById('support-link').textContent = supportLink;
+                    document.getElementById('support-link').href = supportLink;
+                    utils.showElement(document.getElementById('support-link-container'));
+                    
                     const telegramMessage = `🆘 <b>Новое сообщение в поддержку</b>\n\n` +
                         `Пользователь: ${state.currentUser.email}\n` +
                         `Сообщение: ${message}\n\n` +
                         `Ответить: /reply_${state.supportChatId}`;
                     await sendTelegramNotification(telegramMessage);
+                    
                     document.getElementById('support-message').value = '';
                     await loadSupportMessages();
                 } catch (error) {
@@ -1205,7 +1329,43 @@
                     alert('Не удалось отправить сообщение в поддержку');
                 }
             });
+
+            document.getElementById('admin-support-table').addEventListener('click', async (e) => {
+                if (e.target.classList.contains('view-support-chat')) {
+                    const chatId = e.target.closest('.view-support-chat').getAttribute('data-chat-id');
+                    await loadAdminSupportChat(chatId);
+                    elements.adminSupportModal.show();
+                }
+            });
+
+            document.getElementById('send-admin-support-message').addEventListener('click', async () => {
+                const message = document.getElementById('admin-support-message').value.trim();
+                if (!message || !state.currentSupportChat) return;
+                try {
+                    const newMessage = {
+                        text: message,
+                        sender: 'admin',
+                        createdAt: serverTimestamp(),
+                        read: true
+                    };
+                    
+                    await firestoreService.addSupportMessage(state.currentSupportChat, newMessage);
+                    document.getElementById('admin-support-message').value = '';
+                    await loadAdminSupportChat(state.currentSupportChat);
+                    
+                    // Отправляем уведомление пользователю (можно реализовать через email или другой мессенджер)
+                    const userDoc = await firestoreService.getUserData(state.currentSupportChat);
+                    if (userDoc?.email) {
+                        // Здесь можно отправить email пользователю о новом ответе
+                        console.log(`Отправлен ответ пользователю ${userDoc.email}`);
+                    }
+                } catch (error) {
+                    console.error('Ошибка при отправке сообщения:', error);
+                    alert('Не удалось отправить сообщение');
+                }
+            });
         };
+
         const renderProducts = () => {
             if (!state.products.length) {
                 elements.productsContainer.innerHTML = '<div class="col-12 text-center py-5"><h4>Товары не найдены</h4></div>';
@@ -1255,6 +1415,7 @@
                 `;
                 elements.productsContainer.appendChild(productCard);
             });
+
             document.querySelectorAll('.increase-cart').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('[data-product-id]').getAttribute('data-product-id');
@@ -1268,6 +1429,7 @@
                     }
                 });
             });
+
             document.querySelectorAll('.decrease-cart').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('[data-product-id]').getAttribute('data-product-id');
@@ -1285,6 +1447,7 @@
                     }
                 });
             });
+
             document.querySelectorAll('.cart-quantity-input').forEach(input => {
                 input.addEventListener('change', async (e) => {
                     const productId = e.target.getAttribute('data-product-id');
@@ -1303,6 +1466,7 @@
                     }
                 });
             });
+
             document.querySelectorAll('.add-to-cart').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.add-to-cart').getAttribute('data-product-id');
@@ -1326,6 +1490,7 @@
                 });
             });
         };
+
         const renderAdminProductsTable = () => {
             elements.adminProductsTable.innerHTML = '';
             state.products.forEach(product => {
@@ -1348,6 +1513,7 @@
                 `;
                 elements.adminProductsTable.appendChild(row);
             });
+
             document.querySelectorAll('.edit-product').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.edit-product').getAttribute('data-product-id');
@@ -1366,6 +1532,7 @@
                     }
                 });
             });
+
             document.querySelectorAll('.delete-product').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.delete-product').getAttribute('data-product-id');
@@ -1381,6 +1548,7 @@
                 });
             });
         };
+
         const renderUsersTable = (users = state.users) => {
             elements.adminUsersTable.innerHTML = '';
             users.forEach(user => {
@@ -1401,6 +1569,7 @@
                 `;
                 elements.adminUsersTable.appendChild(row);
             });
+
             document.querySelectorAll('.edit-balance').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const userId = e.target.closest('.edit-balance').getAttribute('data-user-id');
@@ -1413,6 +1582,7 @@
                     elements.balanceModal.show();
                 });
             });
+
             document.querySelectorAll('.delete-user').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const userId = e.target.closest('.delete-user').getAttribute('data-user-id');
@@ -1427,6 +1597,7 @@
                 });
             });
         };
+
         const renderAdminOrdersTable = () => {
             elements.adminOrdersTable.innerHTML = '';
             state.orders.forEach(order => {
@@ -1452,6 +1623,7 @@
                 elements.adminOrdersTable.appendChild(row);
             });
         };
+
         const renderAdminSupportTable = () => {
             elements.adminSupportTable.innerHTML = '';
             state.supportRequests.forEach(request => {
@@ -1468,14 +1640,8 @@
                 `;
                 elements.adminSupportTable.appendChild(row);
             });
-            document.querySelectorAll('.view-support-chat').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const chatId = e.target.closest('.view-support-chat').getAttribute('data-chat-id');
-                    // Здесь можно реализовать просмотр чата поддержки
-                    alert(`Открыть чат с пользователем: ${chatId}`);
-                });
-            });
         };
+
         const renderUserOrders = () => {
             const ordersList = document.getElementById('orders-list');
             ordersList.innerHTML = '';
@@ -1523,6 +1689,7 @@
                 ordersList.appendChild(orderElement);
             });
         };
+
         const renderSupportChat = () => {
             const chatContainer = document.getElementById('support-chat');
             chatContainer.innerHTML = '';
@@ -1545,6 +1712,30 @@
             });
             chatContainer.scrollTop = chatContainer.scrollHeight;
         };
+
+        const renderAdminSupportChat = () => {
+            const chatContainer = document.getElementById('admin-support-chat');
+            chatContainer.innerHTML = '';
+            if (state.supportMessages.length === 0) {
+                chatContainer.innerHTML = '<div class="text-muted text-center py-4">Нет сообщений в этом чате</div>';
+                return;
+            }
+            state.supportMessages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `support-message ${msg.sender === 'user' ? 'user' : 'admin'}`;
+                const date = msg.createdAt?.toDate ? msg.createdAt.toDate() : new Date();
+                messageDiv.innerHTML = `
+                    <div>${msg.text}</div>
+                    <div class="support-meta">
+                        ${msg.sender === 'user' ? 'Пользователь' : 'Вы'} • 
+                        ${date.toLocaleString()}
+                    </div>
+                `;
+                chatContainer.appendChild(messageDiv);
+            });
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        };
+
         const renderCart = () => {
             const cartItemsTable = document.getElementById('cart-items-table');
             const cartEmpty = document.getElementById('cart-empty');
@@ -1597,6 +1788,7 @@
             });
             document.getElementById('cart-total').textContent = utils.formatPrice(total);
             updateCartCounter();
+
             document.querySelectorAll('.increase-quantity').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.increase-quantity').getAttribute('data-product-id');
@@ -1609,6 +1801,7 @@
                     }
                 });
             });
+
             document.querySelectorAll('.decrease-quantity').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.decrease-quantity').getAttribute('data-product-id');
@@ -1625,6 +1818,7 @@
                     }
                 });
             });
+
             document.querySelectorAll('.remove-from-cart').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.closest('.remove-from-cart').getAttribute('data-product-id');
@@ -1634,6 +1828,7 @@
                     renderProducts();
                 });
             });
+
             document.querySelectorAll('#cart-items-table input[type="number"]').forEach(input => {
                 input.addEventListener('change', async (e) => {
                     const productId = e.target.getAttribute('data-product-id');
@@ -1652,9 +1847,11 @@
                 });
             });
         };
+
         const updateUserBalanceDisplay = () => {
             elements.userBalanceNav.textContent = `Баланс: ${utils.formatPrice(state.userBalance)} ₽`;
         };
+
         const updateCartCounter = () => {
             const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
             elements.cartCounter.textContent = totalItems > 9 ? '9+' : totalItems;
@@ -1664,6 +1861,7 @@
                 utils.hideElement(elements.cartCounter);
             }
         };
+
         const loadAdminData = async () => {
             try {
                 state.products = await firestoreService.getProducts();
@@ -1685,12 +1883,14 @@
                 console.error('Ошибка при загрузке данных:', error);
             }
         };
+
         const loadCart = async () => {
             if (state.currentUser) {
                 state.cart = await firestoreService.getCart(state.currentUser.uid);
                 updateCartCounter();
             }
         };
+
         const loadProfileData = async () => {
             if (state.currentUser) {
                 state.userProfile = await firestoreService.getUserData(state.currentUser.uid);
@@ -1701,12 +1901,14 @@
                 }
             }
         };
+
         const loadUserOrders = async () => {
             if (state.currentUser) {
                 state.orders = await firestoreService.getUserOrders(state.currentUser.uid);
                 renderUserOrders();
             }
         };
+
         const loadSupportMessages = async () => {
             if (!state.currentUser) return;
             try {
@@ -1722,6 +1924,23 @@
                 console.error('Ошибка при загрузке сообщений поддержки:', error);
             }
         };
+
+        const loadAdminSupportChat = async (chatId) => {
+            try {
+                state.currentSupportChat = chatId;
+                state.supportMessages = await firestoreService.getSupportMessages(chatId);
+                await firestoreService.markSupportMessageAsRead(chatId);
+                renderAdminSupportChat();
+                const q = query(collection(db, "supportChats", chatId, "messages"), orderBy("createdAt"));
+                onSnapshot(q, (snapshot) => {
+                    state.supportMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderAdminSupportChat();
+                });
+            } catch (error) {
+                console.error('Ошибка при загрузке чата поддержки:', error);
+            }
+        };
+
         const initApp = async () => {
             setupEventListeners();
             onAuthStateChanged(auth, async (user) => {
@@ -1763,6 +1982,7 @@
                 }
             });
         };
+
         initApp();
     </script>
 </body>
