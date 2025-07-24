@@ -1275,7 +1275,7 @@
                         ).join('\n')}`;
                     await sendTelegramNotification(message);
                     elements.cartModal.hide();
-                    alert(`Заказ #${orderId} успешно оформлен! Ожидайте подтверждения.`);
+                    alert(`Ваш заказ #${orderId} успешно оформлен! Для подтверждения и выдачи покупки напишите в тг: @bebra556`);
                     renderProducts();
                 } catch (error) {
                     alert(`Ошибка при оформлении заказа: ${error.message}`);
